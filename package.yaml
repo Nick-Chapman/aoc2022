@@ -1,0 +1,58 @@
+name:                aoc2022
+version:             0.1.0.0
+description:         My solutions for Advent of Code 2022
+license:             BSD3
+author:              Nick Chapman
+maintainer:          nic@amadido.co.uk
+github:              https://github.com/Nick-Chapman/aoc2022.git
+
+dependencies:
+- ansi-terminal
+- array
+- async
+- base >= 4.7 && < 5
+- bytestring
+- clock
+- containers
+- containers
+- extra
+- haskeline
+- mtl
+- split
+- text
+- time
+- transformers
+- word8
+- EarleyM
+
+default-extensions:
+- BangPatterns
+- DuplicateRecordFields
+- EmptyCase
+- FlexibleContexts
+- GADTs
+- GeneralizedNewtypeDeriving
+- InstanceSigs
+- LambdaCase
+- MultiWayIf
+- NamedFieldPuns
+- NondecreasingIndentation
+- NumericUnderscores
+- RankNTypes
+- ScopedTypeVariables
+- TypeApplications
+- TypeFamilies
+- UndecidableInstances
+
+ghc-options:
+- -Werror
+- -Wall
+- -Wno-name-shadowing
+
+library:
+  source-dirs: src
+
+executables:
+  main.exe:
+    main:                app/main.hs
+    dependencies:        aoc2022
