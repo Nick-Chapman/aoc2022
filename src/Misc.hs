@@ -1,5 +1,5 @@
 
-module Misc (check,readInts,collate,look) where
+module Misc (check,readInts,collate,look,splitOn) where
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -17,3 +17,13 @@ collate xs = Map.toList (Map.fromListWith (++) [ (k,[v]) | (k,v) <- xs ])
 
 look :: (Ord k, Show k) => k -> Map k v -> v
 look k m = maybe (error (show ("look",k))) id $ Map.lookup k m
+
+splitOn :: Eq a => a -> [a] -> [[a]]
+splitOn delimter xs = loop [] xs
+  where
+    loop acc = \case
+      [] -> [reverse acc]
+      x:xs ->
+        if x == delimter
+        then reverse acc : loop [] xs
+        else loop (x:acc) xs
