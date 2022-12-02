@@ -12,45 +12,61 @@ main = do
 gram :: Par Setup
 gram = terminated nl line
   where
-    line = do them <- abc; lit ' '; me <- def; pure (them,me)
-    abc = alts [ do lit 'A'; pure A
-               , do lit 'B'; pure B
-               , do lit 'C'; pure C ]
-    def = alts [ do lit 'X'; pure X
-               , do lit 'Y'; pure Y
-               , do lit 'Z'; pure Z ]
+    i c v = do lit c; pure v
+    line = do
+      them <- alts [ i 'A' A, i 'B' B, i 'C' C ]
+      lit ' '
+      me <- alts [ i 'X' X, i 'Y' Y, i 'Z' Z ]
+      pure (them,me)
 
-type Setup = [Round]
-type Round = (Them,Me)
+type Setup = [(Them,Me)]
 
-data Them =  A | B | C deriving (Eq,Show) -- Rock,Paper,Sci
-data Me   =  X | Y | Z deriving (Eq,Show) -- Rock,Paper,Sci
+data Them    = A | B | C
+data Me      = X | Y | Z
+data Go      = R | P | S
+data Outcome = W | D | L deriving Eq
 
 part1 :: Setup -> Int
-part1 xs = sum [ game (t,m) + score m | (t,m) <- xs ]
-
-score :: Me -> Int
-score = \case X -> 1; Y -> 2; Z -> 3
-
-game :: (Them,Me) -> Int
-game = \case
-  (A,X) -> 3; (A,Y) -> 6; (A,Z) -> 0
-  (B,X) -> 0; (B,Y) -> 3; (B,Z) -> 6
-  (C,X) -> 6; (C,Y) -> 0; (C,Z) -> 3
+part1 xs =
+  sum [ scoreOutcome (outcomeForPlayer2 p1 p2) + scoreGo p2
+      | (them,me) <- xs
+      , let p1 = goThem them
+      , let p2 = goMe me
+      ]
 
 part2 :: Setup -> Int
-part2 xs = sum [ game (t,m) + score m | (t,r) <- xs, let m = makeR (t,r) ]
+part2 xs =
+  sum [ scoreOutcome outcome + scoreGo p2
+      | (them,me) <- xs
+      , let p1 = goThem them
+      , let outcome = outcomeMe me
+      , let p2 = makeOutcome p1 outcome
+      ]
 
-makeR :: (Them,Me) -> Me
-makeR = \case
-  (A,X) -> Z -- rock,loose -> sci
-  (A,Y) -> X -- rock,draw -> rock
-  (A,Z) -> Y -- rock,win -> paper
+goThem :: Them -> Go
+goThem = \case A -> R; B -> P; C -> S
 
-  (B,X) -> X -- paper,loose -> rock
-  (B,Y) -> Y -- paper,draw -> paper
-  (B,Z) -> Z -- paper,win -> sci
+goMe :: Me -> Go
+goMe = \case X -> R; Y -> P; Z -> S
 
-  (C,X) -> Y -- sci,loose -> paper
-  (C,Y) -> Z -- sci,draw --> sci
-  (C,Z) -> X -- sci,win --> rock
+outcomeMe :: Me -> Outcome
+outcomeMe = \case X -> L; Y -> D; Z -> W
+
+scoreGo :: Go -> Int
+scoreGo = \case R -> 1; P -> 2; S -> 3
+
+scoreOutcome :: Outcome -> Int
+scoreOutcome = \case W -> 6; D -> 3; L -> 0
+
+outcomeForPlayer2 :: Go -> Go -> Outcome
+outcomeForPlayer2 = x
+  where
+    x R R = D; x R P = W; x R S = L;
+    x P R = L; x P P = D; x P S = W;
+    x S R = W; x S P = L; x S S = D;
+
+makeOutcome :: Go -> Outcome -> Go
+makeOutcome p1 outcome =
+  the_head [ p2 | p2 <- [R,P,S], outcomeForPlayer2 p1 p2 == outcome ]
+  where
+    the_head = \case [x] -> x; _ -> undefined
