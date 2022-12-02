@@ -1,5 +1,5 @@
 
-module Misc (check,readInts,collate,look,splitOn) where
+module Misc (check,readInts,collate,look,splitOn,theHead) where
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -27,3 +27,6 @@ splitOn delimter xs = loop [] xs
         if x == delimter
         then reverse acc : loop [] xs
         else loop (x:acc) xs
+
+theHead :: [a] -> a
+theHead = \case [x] -> x; _ -> undefined

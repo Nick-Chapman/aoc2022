@@ -1,6 +1,6 @@
 module Day2 (main) where
 
-import Misc (check)
+import Misc (check,theHead)
 import Par4 (Par,parse,terminated,alts,nl,lit)
 
 main :: IO ()
@@ -23,8 +23,17 @@ type Setup = [(Them,Me)]
 
 data Them    = A | B | C
 data Me      = X | Y | Z
-data Go      = R | P | S
-data Outcome = W | D | L deriving Eq
+data Go      = Rock | Paper | Scissors
+data Outcome = Win | Draw | Loss deriving Eq
+
+goThem :: Them -> Go
+goThem = \case A -> Rock; B -> Paper; C -> Scissors
+
+scoreGo :: Go -> Int
+scoreGo = \case Rock -> 1; Paper -> 2; Scissors -> 3
+
+scoreOutcome :: Outcome -> Int
+scoreOutcome = \case Win -> 6; Draw -> 3; Loss -> 0
 
 part1 :: Setup -> Int
 part1 xs =
@@ -33,6 +42,9 @@ part1 xs =
       , let p1 = goThem them
       , let p2 = goMe me
       ]
+  where
+    goMe :: Me -> Go
+    goMe = \case X -> Rock; Y -> Paper; Z -> Scissors
 
 part2 :: Setup -> Int
 part2 xs =
@@ -42,31 +54,26 @@ part2 xs =
       , let outcome = outcomeMe me
       , let p2 = makeOutcome p1 outcome
       ]
-
-goThem :: Them -> Go
-goThem = \case A -> R; B -> P; C -> S
-
-goMe :: Me -> Go
-goMe = \case X -> R; Y -> P; Z -> S
-
-outcomeMe :: Me -> Outcome
-outcomeMe = \case X -> L; Y -> D; Z -> W
-
-scoreGo :: Go -> Int
-scoreGo = \case R -> 1; P -> 2; S -> 3
-
-scoreOutcome :: Outcome -> Int
-scoreOutcome = \case W -> 6; D -> 3; L -> 0
+  where
+    outcomeMe :: Me -> Outcome
+    outcomeMe = \case X -> Loss; Y -> Draw; Z -> Win
 
 outcomeForPlayer2 :: Go -> Go -> Outcome
 outcomeForPlayer2 = x
   where
-    x R R = D; x R P = W; x R S = L;
-    x P R = L; x P P = D; x P S = W;
-    x S R = W; x S P = L; x S S = D;
+    x Rock     Rock     = Draw
+    x Rock     Paper    = Win
+    x Rock     Scissors = Loss
+    x Paper    Rock     = Loss
+    x Paper    Paper    = Draw
+    x Paper    Scissors = Win
+    x Scissors Rock     = Win
+    x Scissors Paper    = Loss
+    x Scissors Scissors = Draw
 
 makeOutcome :: Go -> Outcome -> Go
 makeOutcome p1 outcome =
-  the_head [ p2 | p2 <- [R,P,S], outcomeForPlayer2 p1 p2 == outcome ]
-  where
-    the_head = \case [x] -> x; _ -> undefined
+  theHead [ p2
+          | p2 <- [Rock,Paper,Scissors]
+          , outcomeForPlayer2 p1 p2 == outcome
+          ]
