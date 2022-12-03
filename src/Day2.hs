@@ -1,6 +1,6 @@
 module Day2 (main) where
 
-import Misc (check,theHead)
+import Misc (check,the)
 import Par4 (Par,parse,terminated,alts,nl,lit)
 
 main :: IO ()
@@ -73,7 +73,7 @@ outcomeForPlayer2 = x
 
 makeOutcome :: Go -> Outcome -> Go
 makeOutcome p1 outcome =
-  theHead [ p2
-          | p2 <- [Rock,Paper,Scissors]
-          , outcomeForPlayer2 p1 p2 == outcome
-          ]
+  the [ p2
+      | p2 <- [Rock,Paper,Scissors]
+      , outcomeForPlayer2 p1 p2 == outcome
+      ]

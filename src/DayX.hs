@@ -1,21 +1,21 @@
 module DayX (main) where
 
 import Misc (check)
-import Par4 (Par,parse,separated,nl,int)
+import Par4 --(Par,parse,many,terminated,sat,nl)
 
 main :: IO ()
 main = do
-  inp <- load "input/day1.input"
-  print ("day1, part1", check 2000 $ part1 inp)
+  inp <- parse gram <$> readFile "input/day3.input"
+  mapM_ print (zip [1::Int ..] inp)
+  print ("dayX, part1", check 2000 $ part1 inp)
 
-load :: FilePath -> IO Setup
-load path = parse gram <$> readFile path
+type Setup = [String]
 
-gram :: Par [Line]
-gram = separated nl int
-
-type Setup = [Line]
-type Line = Int
+gram :: Par Setup
+gram = terminated nl line
+  where
+    line = many dot
+    dot = sat $ \c -> c /= '\n'
 
 part1 :: Setup -> Int
 part1 = length

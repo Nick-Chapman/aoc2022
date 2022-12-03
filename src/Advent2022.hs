@@ -10,11 +10,13 @@ import Text.Printf (printf)
 
 import qualified Day1
 import qualified Day2
+import qualified Day3
 
 mains :: [(Int,IO ())]
 mains = zip [1..]
   [ Day1.main
   , Day2.main
+  , Day3.main
   ]
 
 main :: IO ()
@@ -23,8 +25,7 @@ main = do
   let selected = if args == [] then  [1..] else map read args
   let picked = [ x | x@(i,_) <- mains, i `elem` selected ]
   _info <- sequence [ timed day io | (day,io) <- picked ]
-  --printTimings _info
-  pure ()
+  if length picked > 1 then printTimings _info else pure ()
 
 data Timing = Timing { day :: Int, time :: Nanos }
 

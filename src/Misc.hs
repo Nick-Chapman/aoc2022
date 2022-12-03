@@ -1,16 +1,12 @@
 
-module Misc (check,readInts,collate,look,splitOn,theHead) where
+module Misc (check,collate,look,splitOn,the,hist,nub) where
 
 import Data.Map (Map)
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 check :: (Eq a, Show a) => a -> a -> a
-check x y = if x == y then x else error (show (x,y))
-
-readInts :: FilePath -> IO [Int]
-readInts path = do
-  str <- readFile path
-  pure $ map read (words str)
+check a b = if a == b then a else error ("check failed: " ++ show a ++ " not same as: " ++ show b)
 
 collate :: Ord k => [(k,v)] -> [(k,[v])]
 collate xs = Map.toList (Map.fromListWith (++) [ (k,[v]) | (k,v) <- xs ])
@@ -28,5 +24,11 @@ splitOn delimter xs = loop [] xs
         then reverse acc : loop [] xs
         else loop (x:acc) xs
 
-theHead :: [a] -> a
-theHead = \case [x] -> x; _ -> undefined
+the :: [a] -> a
+the = \case [x] -> x; _ -> undefined
+
+hist :: (Ord a, Eq a) => [a] -> Map a Int
+hist = Map.fromListWith (+) . map (\k -> (k,1))
+
+nub :: Ord a => [a] -> [a]
+nub = Set.toList . Set.fromList
