@@ -1,9 +1,10 @@
 module Day3 (main) where
 
-import Misc (check,the,hist,nub)
-import qualified Data.Map as Map
+import Misc (check,the)
 import Data.Char as Char (ord)
 import Data.List.Split (chunksOf)
+import qualified Data.Set as Set
+import Data.Set (intersection)
 
 main :: IO ()
 main = do
@@ -25,9 +26,8 @@ part1 = sum . map perLine
     perLine line = do
       let n = length line `div` 2
       let (xs,ys) = splitAt n line
-      the [ prio k
-          | (k,v) <- Map.toList (hist (nub xs ++ nub ys))
-          , v == 2
+      the [ prio c
+          | c <- Set.toList (Set.fromList xs `intersection` Set.fromList ys)
           ]
 
 part2 :: Setup -> Int
@@ -35,7 +35,7 @@ part2 = sum . map per3lines . chunksOf 3
   where
     per3lines chunk = do
       let [xs,ys,zs] = chunk
-      the [ prio k
-          | (k,v) <- Map.toList (hist (nub xs ++ nub ys ++ nub zs))
-          , v == 3
+      the [ prio c
+          | c <- Set.toList (Set.fromList xs `intersection` Set.fromList ys
+                             `intersection` Set.fromList zs)
           ]
