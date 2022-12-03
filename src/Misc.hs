@@ -15,12 +15,12 @@ look :: (Ord k, Show k) => k -> Map k v -> v
 look k m = maybe (error (show ("look",k))) id $ Map.lookup k m
 
 splitOn :: Eq a => a -> [a] -> [[a]]
-splitOn delimter xs = loop [] xs
+splitOn delimiter xs = loop [] xs
   where
     loop acc = \case
       [] -> [reverse acc]
       x:xs ->
-        if x == delimter
+        if x == delimiter
         then reverse acc : loop [] xs
         else loop (x:acc) xs
 
