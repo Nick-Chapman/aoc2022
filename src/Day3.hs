@@ -20,7 +20,7 @@ prio c = if
   | otherwise -> undefined
 
 part1 :: Setup -> Int
-part1 lines = sum (map perLine lines)
+part1 = sum . map perLine
   where
     perLine line = do
       let n = length line `div` 2
@@ -31,7 +31,7 @@ part1 lines = sum (map perLine lines)
           ]
 
 part2 :: Setup -> Int
-part2 lines = sum (map per3lines (chunksOf 3 lines))
+part2 = sum . map per3lines . chunksOf 3
   where
     per3lines chunk = do
       let [xs,ys,zs] = chunk
