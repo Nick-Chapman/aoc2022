@@ -14,10 +14,10 @@ main = do
 type Setup = [String]
 
 prio :: Char -> Int
-prio c
-  | 'a' <= c && c <= 'z' = ord c - ord 'a' + 1
-  | 'A' <= c && c <= 'Z' = ord c - ord 'A' + 27
-  | otherwise = undefined
+prio c = if
+  | 'a' <= c && c <= 'z' -> ord c - ord 'a' + 1
+  | 'A' <= c && c <= 'Z' -> ord c - ord 'A' + 27
+  | otherwise -> undefined
 
 part1 :: Setup -> Int
 part1 lines = sum (map perLine lines)
