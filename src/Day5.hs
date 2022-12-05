@@ -1,7 +1,7 @@
 module Day5 (main) where
 
 import Misc (check,look)
-import ParE (Par,parse,terminated,separated,lit,alts,key,int,char,nl,many,dot)
+import Par4 (Par,parse,terminated,separated,lit,alts,key,int,char,nl,many,dot)
 import Data.Maybe (catMaybes)
 import Data.List as List (transpose)
 import Data.Map (Map)

@@ -33,7 +33,7 @@ terminated term p = alts [ pure [], do x <- p; term; xs <- terminated term p; pu
 opt p = alts [ pure Nothing, fmap Just p ]
 alts = foldl Alt Fail
 word = some $ sat Char.isAlpha
-key cs = mapM_ lit cs
+key cs = NoError (mapM_ lit cs)
 int = foldl (\acc d -> 10*acc + d) 0 <$> some digit
 ws1 = do sp; ws0
 ws0 = do _ <- many sp; return ()
@@ -54,6 +54,7 @@ data Par a where
   Bind :: Par a -> (a -> Par b) -> Par b
   Fail :: Par a
   Satisfy :: (Char -> Bool) -> Par Char
+  NoError :: Par a -> Par a
   Alt :: Par a -> Par a -> Par a
 
 type Res a = Either [Char] (a,[Char])
@@ -104,6 +105,13 @@ parse parStart chars  = do
         case chars of
           [] -> fail ()
           c:chars -> if pred c then succ chars c else fail ()
+
+      NoError par -> do
+        run chars par K4 { eps = eps
+                         , succ = succ
+                         , fail = fail
+                         , err = \_ -> fail ()
+                         }
 
       Alt p1 p2 -> do
         run chars p1 K4{ eps = \a1 ->
