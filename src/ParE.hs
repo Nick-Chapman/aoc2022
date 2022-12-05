@@ -1,6 +1,6 @@
 
 -- | Earley Parser Combinators
-module ParE (Par,parse,word,key,int,ws0,ws1,sp,nl,lit,sat,char,alts,opt,separated,terminated,many,some,digit) where
+module ParE (Par,parse,word,key,int,ws0,ws1,sp,nl,lit,sat,char,alts,opt,separated,terminated,many,some,digit,dot) where
 
 import Control.Applicative (Alternative,empty,(<|>),many,some)
 import Control.Monad (ap,liftM)
@@ -28,6 +28,7 @@ digit :: Par Int
 sp :: Par ()
 nl :: Par ()
 lit :: Char -> Par ()
+dot :: Par Char
 sat :: (Char -> Bool) -> Par Char
 char :: Par Char
 
@@ -44,6 +45,7 @@ digit = digitOfChar <$> sat Char.isDigit
 sp = lit ' '
 nl = lit '\n'
 lit x = do _ <- sat (== x); pure ()
+dot = sat (/= '\n')
 
 sat pred = do c <- Token; if pred c then return c else Fail
 char = Token
