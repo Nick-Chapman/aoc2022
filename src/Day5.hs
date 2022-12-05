@@ -14,7 +14,7 @@ main = do
   print ("day5, part1 (sam)", check "CMZ" $ part1 sam)
   print ("day5, part1", check "TPGVQPFDH" $ part1 inp)
   print ("day5, part2 (sam)", check "MCD" $ part2 sam)
-  print ("day5, part2 (sam)", check "DMRDFRHHH" $ part2 inp)
+  print ("day5, part2", check "DMRDFRHHH" $ part2 inp)
     where
       part1 = go Part1
       part2 = go Part2
