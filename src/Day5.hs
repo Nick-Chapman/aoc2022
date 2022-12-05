@@ -1,9 +1,9 @@
 module Day5 (main) where
 
 import Misc (check,look)
-import Par4 (Par,parse,separated,lit,alts,key,int,char)
+import ParE (Par,parse,terminated,separated,lit,alts,key,int,char,nl,many,dot)
 import Data.Maybe (catMaybes)
-import Data.List as List (transpose,break)
+import Data.List as List (transpose)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -52,9 +52,14 @@ type StackId = Int
 type Crate = Char
 
 setup :: String -> Setup
-setup s0 = (map (parse line) (Prelude.init s1), map (parse op) (tail s2))
+setup = parse gram
   where
-    (s1,s2) = List.break (== "") (lines s0)
+    gram :: Par Setup
+    gram = do
+      xs <- terminated nl line
+      do _ <- many dot; nl; nl -- skip numeric column labels
+      ys <- terminated nl op
+      pure (xs,ys)
 
     line :: Par Line
     line = separated (lit ' ') maybeCrate
