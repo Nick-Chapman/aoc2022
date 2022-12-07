@@ -46,26 +46,19 @@ makeFS = loop [] []
     loop :: [Sub] -> [[Sub]] -> [Interaction] -> FS
     loop acc stack = \case
       [] -> finish acc stack
-      i:is -> do
-        case i of
-          LS xs -> case acc of [] -> loop [ F z | FileSize z _ <- xs ] stack is;  _:_ -> error "ls"
-          CD (Rel __n) -> loop [] (acc:stack) is
-          CD Root -> case stack of [] -> loop acc stack is; _ -> error "root"
-          CD DotDot ->
-            case stack of
-              [] -> error "dotdot"
-              acc2:stack -> loop ([D (FS acc)]++acc2) stack is
+      LS xs:is -> case acc of [] -> loop [ F z | z <- xs ] stack is;  _:_ -> error "ls"
+      CD Down:is-> loop [] (acc:stack) is
+      CD Root:is -> case stack of [] -> loop acc stack is; _ -> error "root"
+      CD Up:is -> case stack of up:stack -> loop (D (FS acc) : up) stack is; [] -> error "up"
 
     finish :: [Sub] -> [[Sub]] -> FS
     finish acc = \case
       [] -> FS acc
-      acc2:stack -> finish ([D (FS acc)]++acc2) stack
+      up:stack -> finish (D (FS acc) : up) stack
 
 type Setup = [Interaction]
-data Interaction = CD Dest | LS [Info] deriving Show
-data Dest = Root | DotDot | Rel Name deriving Show
-type Name = String
-data Info = FileSize Int Name | DirExists Name deriving Show
+data Interaction = CD Dest | LS [Int] deriving Show
+data Dest = Root | Up | Down deriving Show
 
 gram :: Par Setup
 gram = many interaction
@@ -74,12 +67,11 @@ gram = many interaction
     cd = do key "cd "; d <- dest; nl; pure (CD d)
     dest = alts [slash, dotdot, relative]
     slash = do key "/"; pure Root
-    dotdot = do key ".."; pure DotDot
-    relative = Rel <$> name
+    dotdot = do key ".."; pure Up
+    relative = do _ <- name; pure Down
     ls = do key "ls"; nl; LS <$> many info
     info = alts [filesize,direxists]
-    filesize = do i <- size; lit ' '; n <- name; nl; pure (FileSize i n)
-    direxists = do key "dir "; n <- name; nl; pure (DirExists n)
-    name = many dot
+    filesize = do i <- int; lit ' '; name; nl; pure i
+    direxists = do key "dir "; name; nl; pure 0
+    name = do _ <- many dot; pure ()
     dot = sat $ \c -> c /= '\n'
-    size = int
