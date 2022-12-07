@@ -1,11 +1,10 @@
 module Day7 (main) where
 
-import Misc (check,collate)
+import Misc (check)
 import Par4 (Par,parse,many,sat,nl,key,alts,lit,int)
 
 main :: IO ()
 main = do
-  let makeFS = structureFS . buildEntries
   sam <- makeFS <$> parse gram <$> readFile "input/day7.sam"
   inp <- makeFS <$> parse gram <$> readFile "input/day7.input"
   print ("day7, part1 (sam)", check 95437 $ part1 sam)
@@ -41,33 +40,26 @@ totSize (FS subs) = sum (map tot subs)
 data FS = FS [Sub] deriving Show
 data Sub = F Int | D FS deriving Show
 
-structureFS :: [Entry] -> FS
-structureFS = \case
-  [] -> FS []
-  es -> FS ([ D (structureFS es') | es' <- subs es ] ++
-            [ F z | z <- files es ])
+makeFS :: [Interaction] -> FS
+makeFS = loop [] []
   where
-    subs :: [Entry] -> [[Entry]]
-    subs es = map snd $ collate [ (x,(xs,z)) | (x:xs,z) <- es, xs /= [] ]
-
-    files :: [Entry] -> [Int]
-    files es = [ z | ([_],z) <- es ]
-
-type Entry = (Path,Int)
-type Path = [Name]
-
-buildEntries :: [Interaction] -> [Entry]
-buildEntries = loop [] []
-  where
-    loop :: [Name] -> [Entry] -> [Interaction] -> [Entry]
-    loop rpath acc = \case
-      [] -> acc
+    loop :: [Sub] -> [[Sub]] -> [Interaction] -> FS
+    loop acc stack = \case
+      [] -> finish acc stack
       i:is -> do
         case i of
-          CD Root -> loop [] acc is
-          CD (Rel n) -> loop (n:rpath) acc is
-          CD DotDot -> loop (tail rpath) acc is
-          LS xs -> loop rpath ([ (reverse (n:rpath),z) | FileSize z n <- xs ] ++ acc) is
+          LS xs -> case acc of [] -> loop [ F z | FileSize z _ <- xs ] stack is;  _:_ -> error "ls"
+          CD (Rel __n) -> loop [] (acc:stack) is
+          CD Root -> case stack of [] -> loop acc stack is; _ -> error "root"
+          CD DotDot ->
+            case stack of
+              [] -> error "dotdot"
+              acc2:stack -> loop ([D (FS acc)]++acc2) stack is
+
+    finish :: [Sub] -> [[Sub]] -> FS
+    finish acc = \case
+      [] -> FS acc
+      acc2:stack -> finish ([D (FS acc)]++acc2) stack
 
 type Setup = [Interaction]
 data Interaction = CD Dest | LS [Info] deriving Show
