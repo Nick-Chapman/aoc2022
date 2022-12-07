@@ -28,30 +28,30 @@ dirSizes :: FS -> [Int]
 dirSizes (root@(FS subs)) = [totSize root] ++ concat (map doSub subs)
   where
     doSub = \case
-      F _ _ -> []
-      D _ fs -> dirSizes fs
+      F _ -> []
+      D fs -> dirSizes fs
 
 totSize :: FS -> Int
 totSize (FS subs) = sum (map tot subs)
   where
     tot = \case
-      F _ z -> z
-      D _ fs -> totSize fs
+      F z -> z
+      D fs -> totSize fs
 
 data FS = FS [Sub] deriving Show
-data Sub = F Name Int | D Name FS deriving Show
+data Sub = F Int | D FS deriving Show
 
 structureFS :: [Entry] -> FS
 structureFS = \case
   [] -> FS []
-  es -> FS ([ D n (structureFS es') | (n,es') <- subs es ] ++
-            [ F n z | (n,z) <- files es ])
+  es -> FS ([ D (structureFS es') | es' <- subs es ] ++
+            [ F z | z <- files es ])
   where
-    subs :: [Entry] -> [(Name,[Entry])]
-    subs es = collate [ (x,(xs,z)) | (x:xs,z) <- es, xs /= [] ]
+    subs :: [Entry] -> [[Entry]]
+    subs es = map snd $ collate [ (x,(xs,z)) | (x:xs,z) <- es, xs /= [] ]
 
-    files :: [Entry] -> [(Name,Int)]
-    files es = [ (n,z) | ([n],z) <- es ]
+    files :: [Entry] -> [Int]
+    files es = [ z | ([_],z) <- es ]
 
 type Entry = (Path,Int)
 type Path = [Name]
