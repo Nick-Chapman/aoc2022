@@ -24,37 +24,32 @@ part2 fs = do
   minimum [ z | z <- dirSizes fs, z > required ]
 
 dirSizes :: FS -> [Int]
-dirSizes (root@(FS subs)) = [totSize root] ++ concat (map doSub subs)
-  where
-    doSub = \case
-      F _ -> []
-      D fs -> dirSizes fs
+dirSizes (root@(FS _ ts)) = [totSize root] ++ concat (map dirSizes ts)
 
 totSize :: FS -> Int
-totSize (FS subs) = sum (map tot subs)
-  where
-    tot = \case
-      F z -> z
-      D fs -> totSize fs
+totSize (FS xs ts) = sum xs + sum (map totSize ts)
 
-data FS = FS [Sub] deriving Show
-data Sub = F Int | D FS deriving Show
+data FS = FS [Int] [FS] deriving Show
 
 makeFS :: [Interaction] -> FS
-makeFS = loop [] []
+makeFS = loop [] [] []
   where
-    loop :: [Sub] -> [[Sub]] -> [Interaction] -> FS
-    loop acc stack = \case
-      [] -> finish acc stack
-      LS xs:is -> case acc of [] -> loop [ F z | z <- xs ] stack is;  _:_ -> error "ls"
-      CD Down:is-> loop [] (acc:stack) is
-      CD Root:is -> case stack of [] -> loop acc stack is; _ -> error "root"
-      CD Up:is -> case stack of up:stack -> loop (D (FS acc) : up) stack is; [] -> error "up"
+    loop :: [Int] -> [FS] -> [([Int],[FS])] -> [Interaction] -> FS
+    loop xs ts stack = \case
+      [] -> finish xs ts stack
+      LS xs:is -> loop xs ts stack is
+      CD Down:is-> loop [] [] ((xs,ts):stack) is
+      CD Root:is -> loop xs ts stack is
+      CD Up:is ->
+        case stack of
+          [] -> error "up"
+          (xs',ts'):stack ->
+            loop xs' (FS xs ts : ts') stack is
 
-    finish :: [Sub] -> [[Sub]] -> FS
-    finish acc = \case
-      [] -> FS acc
-      up:stack -> finish (D (FS acc) : up) stack
+    finish :: [Int] -> [FS] -> [([Int],[FS])] -> FS
+    finish xs ts = \case
+      [] -> FS xs ts
+      (xs',ts'):stack -> finish xs' (FS xs ts : ts') stack
 
 type Setup = [Interaction]
 data Interaction = CD Dest | LS [Int] deriving Show
