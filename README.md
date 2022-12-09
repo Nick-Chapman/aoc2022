@@ -10,3 +10,4 @@ My solutions for Advent of Code 2022
 [day6](src/Day6.hs)
 [day7](src/Day7.hs)
 [day8](src/Day8.hs)
+[day9](src/Day9.hs)
