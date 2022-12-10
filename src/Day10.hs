@@ -32,38 +32,29 @@ main = do
         ,"#....####..##..####.###..#..#..##..#..#."]
   mapM_ putStrLn (check expected (part2 inp))
 
+part1 :: Setup -> Int
+part1 = sum . run . scanl step 1 . (>>= expand)
   where
-    expand = \case
-      Noop -> [Noop]
-      Addx i -> [Noop,Addx i]
+    run ops = [ cyc*n | (cyc,n) <- zip [1..] ops, (cyc+20) `mod` 40 == 0 ]
 
-    step x = \case
-      Noop -> x
-      Addx i -> x+i
+part2 :: Setup -> [String]
+part2 = chunksOf 40 . map pix . take 240 . zip [0..] . scanl step 1 . (>>= expand)
+  where
+    pix (cyc,x) = do
+      let on1 = (cyc `mod` 40) == x-1
+      let on2 = (cyc `mod` 40) == x
+      let on3 = (cyc `mod` 40) == x+1
+      if on1 || on2 || on3 then '#' else '.'
 
-    part1 :: Setup -> Int
-    part1 = sum . loop 1 1 . (>>= expand)
-      where
-        loop :: Int -> Int -> [Op] -> [Int]
-        loop cyc x = \case
-          [] -> []
-          op:ops -> do
-            let after = loop (cyc+1) (step x op) ops
-            let now = (cyc+20) `mod` 40 == 0
-            if now then cyc * x : after else after
+expand :: Op -> [Op]
+expand = \case
+  Noop -> [Noop]
+  Addx i -> [Noop,Addx i]
 
-    part2 :: Setup -> [String]
-    part2 ops0 = chunksOf 40 (loop 0 1 (ops0 >>= expand))
-      where
-        loop :: Int -> Int -> [Op] -> [Char]
-        loop cyc x = \case
-          [] -> []
-          op:ops -> do
-            let on1 = (cyc `mod` 40) == x-1
-            let on2 = (cyc `mod` 40) == x
-            let on3 = (cyc `mod` 40) == x+1
-            let pix = if on1 || on2 || on3 then '#' else '.'
-            pix : loop (cyc+1) (step x op) ops
+step :: Int -> Op -> Int
+step x = \case
+  Noop -> x
+  Addx i -> x+i
 
 type Setup = [Op]
 data Op = Noop | Addx Int deriving Show
