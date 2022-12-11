@@ -14,11 +14,8 @@ main = do
 
   print ("day11, part1 (sam)", check 10605 $ part1 sam)
   print ("day11, part1", check 108240 $ part1 inp)
-
-  resS2 <- part2 sam
-  print ("day11, part1 (sam)", check 2713310158 $ resS2)
-  resI2 <- part2 inp
-  print ("day11, part1 (sam)", check 25712998901 $ resI2)
+  print ("day11, part1 (sam)", check 2713310158 $ part2 sam)
+  print ("day11, part1 (sam)", check 25712998901 $ part2 inp)
 
 ----------------------------------------------------------------------
 
@@ -163,17 +160,16 @@ initState2 q = do
   let xs = [ (k,map ofInt ws) | (k,Desc ws _ _) <- q ]
   State2 { hold = Map.fromList xs, count = Map.empty }
 
-part2 :: Setup -> IO Int
+part2 :: Setup -> Int
 part2 q = do
   let
-    loop :: Int -> State2 -> IO State2
+    loop :: Int -> State2 -> State2
     loop i s = do
-      if (i `mod` 1000 == 0) then print (i,s) else pure ()
-      if (i == 10000) then return s else loop (i+1) (round s)
-  s' <- loop 0 (initState2 q)
+      if (i == 10000) then s else loop (i+1) (round s)
+  let s' = loop 0 (initState2 q)
   let State2{count} = s'
   let [a,b] = take 2 $ reverse (List.sort (map snd (Map.toList count)))
-  pure (a * b)
+  (a * b)
 
   where
     round :: State2 -> State2
@@ -226,52 +222,26 @@ part2 q = do
       s { hold = Map.insert k (ws++[w]) hold }
 
 ----------------------------------------------------------------------
-{-
+
 data Inty = Inty Int deriving (Show)
 
 ofInt :: Int -> Inty
-ofInt a = Inty a
+ofInt a = Inty (fromIntegral a)
 
 divisible :: Inty -> Int -> Bool
-divisible (Inty a) b = a `mod` b == 0
+divisible (Inty a) b = (a `mod` b) == 0
 
 add :: Inty -> Int -> Inty
 add (Inty a) b = Inty (a+b)
 
 mul :: Inty -> Int -> Inty
-mul (Inty a) b = Inty (a*b)
+mul (Inty a) b = Inty (reduce (a*b))
 
 square :: Inty -> Inty
-square (Inty a) = Inty (a*a)
--}
+square (Inty a) = Inty (reduce (a*a))
 
-data Inty
-  = B Int
-  | A Inty Int
-  | M Inty Int
-  | S Inty
-  deriving Show
-
-ofInt :: Int -> Inty
-ofInt = B
-
-add :: Inty -> Int -> Inty
-add = A
-
-mul :: Inty -> Int -> Inty
-mul = M
-
-square :: Inty -> Inty
-square = S
-
-divisible :: Inty -> Int -> Bool
-divisible i d = i `modi` d == 0
-
-modi :: Inty -> Int -> Int
-modi i d = case i of
-  B x -> x `mod` d
-  S i -> let r = i `modi` d in (r*r) `mod` d
-  M i x -> let r = i `modi` d in (r*x) `mod` d
-  A i x -> let r = i `modi` d in (r+x) `mod` d
-
-
+reduce :: Int -> Int
+reduce x = x `mod` m
+  where
+    m :: Int
+    m = 2*3*5*7*11*13*17*19*23
