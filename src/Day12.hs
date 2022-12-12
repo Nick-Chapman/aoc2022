@@ -3,23 +3,19 @@ module Day12 (main) where
 import Data.Map (Map)
 import Data.Set (Set)
 import Misc (check,look,the)
-import Par4 (Par,parse,many,terminated,sat,nl)
 import qualified Data.Char as Char
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 main :: IO ()
 main = do
-  sam <- parse gram <$> readFile "input/day12.sam"
-  inp <- parse gram <$> readFile "input/day12.input"
+  sam <- lines <$> readFile "input/day12.sam"
+  inp <- lines <$> readFile "input/day12.input"
 
   print ("day12, part1 (sam)", check 31 $ part1 sam)
   print ("day12, part1", check 394 $ part1 inp)
   print ("day12, part2 (sam)", check 29 $ part2 sam)
   print ("day12, part2", check 388 $ part2 inp)
-
-gram :: Par [String]
-gram = terminated nl (many (sat $ \c -> c /= '\n'))
 
 data World = World -- start from 'E', search backwards to 'S' or 'a'
   { step :: Pos -> [Pos]
