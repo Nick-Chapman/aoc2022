@@ -25,7 +25,7 @@ splitOn delimiter xs = loop [] xs
         else loop (x:acc) xs
 
 the :: [a] -> a
-the = \case [x] -> x; _ -> undefined
+the = \case [x] -> x; xs -> error (show ("the",length xs))
 
 hist :: (Ord a, Eq a) => [a] -> Map a Int
 hist = Map.fromListWith (+) . map (\k -> (k,1))
