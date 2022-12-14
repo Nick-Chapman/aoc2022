@@ -12,7 +12,11 @@ main = do
   inp <- parse gram <$> readFile "input/day14.input"
   print ("day14, part1 (sam)", check 24 $ part1 sam)
   print ("day14, part1", check 964 $ part1 inp)
-  pure ()
+  print ("day14, part2 (sam)", check 93 $ part2 sam)
+  print ("day14, part2", check 32041 $ part2 inp)
+  where
+    part1 = partX Part1
+    part2 = partX Part2
 
 type Setup = [[Pos]]
 type Pos = (Int,Int)
@@ -25,8 +29,11 @@ gram = terminated nl line
 
 data State = State { filled :: Set Pos } deriving Show
 
-part1 :: Setup -> Int
-part1 setup = do
+data Part = Part1 | Part2
+
+partX :: Part -> Setup -> Int
+partX part setup = do
+  let step = case part of Part1 -> step1; Part2 -> step2
   let deepest = maximum [ y | (_,y) <- concat setup ]
   let s0 = initState setup
   let
@@ -36,6 +43,40 @@ part1 setup = do
       Just s' -> run s'
   let ss = run s0
   length ss - 1
+
+step1 :: Int -> State -> Maybe State
+step1 deepest State{filled} = flow (500,0)
+  where
+    blocked = (`member` filled)
+    flow :: Pos -> Maybe State
+    flow p = do
+      let fill = State { filled = p `insert` filled }
+      if p `atDepth` deepest then Nothing else do
+        if (blocked p) then error (show ("p-is-filled:",p)) else do
+          let pd = down p
+          if not (blocked pd) then flow pd else do
+            let pl = downLeft p
+            if not (blocked pl) then flow pl else do
+              let pr = downRight p
+              if not (blocked pr) then flow pr else
+                Just $ fill
+
+step2 :: Int -> State -> Maybe State
+step2 deepest State{filled} = flow (500,0)
+  where
+    blocked = (`member` filled)
+    flow :: Pos -> Maybe State
+    flow p = do
+      let fill = State { filled = p `insert` filled }
+      if p `atDepth` (deepest+1) then Just fill else -- changed here
+        if (blocked p) then Nothing else do -- and here
+          let pd = down p
+          if not (blocked pd) then flow pd else do
+            let pl = downLeft p
+            if not (blocked pl) then flow pl else do
+              let pr = downRight p
+              if not (blocked pr) then flow pr else
+                Just fill
 
 initState :: Setup -> State
 initState pss = do
@@ -53,32 +94,14 @@ initState pss = do
     hbar (x1,y) (x2,_) = [ (x,y) | x <- [ min x1 x2 .. max x1 x2 ] ]
     vbar (x,y1) (_,y2) = [ (x,y) | y <- [ min y1 y2 .. max y1 y2 ] ]
 
-
-step :: Int -> State -> Maybe State
-step deepest State{filled} = flow (500,0)
-  where
-    blocked = (`member` filled)
-
-    flow :: Pos -> Maybe State
-    flow p = do
-      if (blocked p) then error (show ("p-is-filled:",p)) else do
-        let pd = down p
-        let pl = downLeft p
-        let pr = downRight p
-        if p `below` deepest then Nothing else
-          if not (blocked pd) then flow pd else
-            if not (blocked pl) then flow pl else
-              if not (blocked pr) then flow pr else
-                Just $ State { filled = p `insert` filled }
-
 horizonal :: Pos -> Pos -> Bool
 horizonal (_,y1) (_,y2) = y1==y2
 
 vertical :: Pos -> Pos -> Bool
 vertical (x1,_) (x2,_) = x1==x2
 
-below :: Pos -> Int -> Bool
-below (_,y) d = y >= d
+atDepth :: Pos -> Int -> Bool
+atDepth (_,y) d = y == d
 
 down :: Pos -> Pos
 down (x,y) = (x,y+1)
