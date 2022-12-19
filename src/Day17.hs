@@ -1,9 +1,9 @@
 module Day17 (main) where
 
-import Misc (check)
-import Par4 --(Par,parse,many,terminated,sat,nl)
-import qualified Data.Set as Set
 import Data.Set (Set)
+import Misc (check)
+import Par4 (Par,parse,many,nl,alts,lit)
+import qualified Data.Set as Set
 
 main :: IO ()
 main = do
@@ -20,10 +20,6 @@ gram = do xs <- many lr; nl; pure xs
   where
     lr = alts [ do lit '<'; pure L
               , do lit '>'; pure R]
-
-part1 :: Setup -> Int
-part1 q = do
-  height (last (sim q))
 
 data State = State
   { solid :: Set Pos
@@ -54,31 +50,40 @@ shapes = map Set.fromList
   , [ (0,0), (1,0), (0,1), (1,1) ]
   ]
 
-sim :: Setup -> [State]
-sim q = loop (initState q)
+part1 :: Setup -> Int
+part1 q = do
+  loop (initState q)
   where
-    loop s = s : loop2 (blow s)
-    loop2 s = s : case fall s of Right s -> loop s; Left s -> [s]
+    loop s = case fall (blow s) of Right s -> loop s; Left h -> h
 
 blow :: State -> State
 blow s@State{falling,wind} = do
-  let move = case wind of [] -> undefined; L:_ -> moveLeft; R:_ -> moveRight
-  let s' = s { falling = Set.map move falling }
-  (if impossible s' then s else s') { wind = tail wind }
+  case wind of
+    [] -> undefined
+    w:wind -> do
+      let move = case w of L -> moveLeft; R -> moveRight
+      let s' = s { falling = Set.map move falling }
+      (if impossible s' then s else s') { wind }
 
-fall :: State -> Either State State
+fall :: State -> Either Int State
 fall s@State{falling} = do
   let s' = s { falling = Set.map moveDown falling }
   if impossible s' then freeze s else Right s'
 
-freeze :: State -> Either State State
-freeze s@State{solid,falling,upcoming} = do
+freeze :: State -> Either Int State
+freeze s@State{solid,falling} = do
   let s' = s { solid = solid `Set.union` falling }
+  case nextRock s' of
+    Nothing -> Left (height s')
+    Just s'' -> Right s''
+
+nextRock :: State -> Maybe State
+nextRock s@State{upcoming} =
   case upcoming of
-    [] -> Left s'
+    [] -> Nothing
     u:upcoming -> do
-      Right $ s'
-        { falling = Set.map (locate (3, height s' + 4)) u
+      Just $ s
+        { falling = Set.map (locate (3, height s + 4)) u
         , upcoming
         }
 
