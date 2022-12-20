@@ -9,8 +9,10 @@ main :: IO ()
 main = do
   sam <- parse gram <$> readFile "input/day17.sam"
   inp <- parse gram <$> readFile "input/day17.input"
-  print ("day17, part1 (sam)", check 3068 $ part1 sam)
-  print ("day17, part1", check 3106 $ part1 inp)
+  res <- part1 sam
+  print ("day17, part1 (sam)", check 3068 $ res)
+  res <- part1 inp
+  print ("day17, part1", check 3106 $ res)
 
 type Setup = [LR]
 data LR = L | R deriving Show
@@ -50,11 +52,29 @@ shapes = map Set.fromList
   , [ (0,0), (1,0), (0,1), (1,1) ]
   ]
 
-part1 :: Setup -> Int
+part1 :: Setup -> IO Int
 part1 q = do
-  loop (initState q)
+  loop 0 (initState q)
   where
-    loop s = case fall (blow s) of Right s -> loop s; Left h -> h
+    loop :: Int -> State -> IO Int
+    loop i s = do
+      --landscape i s
+      case fall (blow s) of
+        Right s ->
+          loop (i+1) s
+        Left h ->
+          pure h
+
+{-landscape :: Int -> State -> IO ()
+landscape i State{solid} = do
+  let ps = Set.toList solid
+  let ys = [ maximum (0:[ y | (x,y) <- ps, x == c ]) | c <- [1..7]]
+  let min = minimum ys
+  let hs = [ y - min | y <- ys ]
+  let steps = [ abs (a-b) | (a,b) <- zip hs (tail hs) ]
+  let s = maximum steps
+  if s /= 1 then pure () else
+    print (i,hs,steps,s)-}
 
 blow :: State -> State
 blow s@State{falling,wind} = do
