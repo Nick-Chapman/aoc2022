@@ -50,74 +50,60 @@ shapes = map Set.fromList
 data State = State
   { solid :: Set Pos
   , wind :: [LR]
+  , wind0 :: [LR]
   }
 
 part1 :: Setup -> Int
 part1 wind0 = do
-  let upcomingInf = shapes ++ upcomingInf
-  let upcoming = take 2022 upcomingInf
-  go upcoming
+  let s0 = State { wind = [] , wind0 = wind0 , solid = Set.empty}
+  height (dropN 2022 s0)
 
-  where
-    --landscape i s
+height :: State -> Int
+height State{solid} =
+  maximum [ y | (_,y) <- (0,0) : Set.toList solid ]
 
-    go :: [Set Pos] -> Int
-    go upcoming = do
-      let s0 = initState
-      let s9 = loop upcoming s0
-      let h = height s9
-      h
+dropN :: Int -> State -> State
+dropN n s =
+  if n < 5 then dropList (take n shapes) s else dropN (n-5) (dropList shapes s)
 
-    height :: State -> Int
-    height State{solid} =
-      maximum [ y | (_,y) <- (0,0) : Set.toList solid ]
+dropList :: [Set Pos] -> State -> State
+dropList us s =
+  foldl drop1 s us
 
-    loop :: [Set Pos] -> State -> State
-    loop upcoming s0 = do
-      case upcoming of
-        [] -> s0
-        u:upcoming -> do
-          let fall = place u s0
-          let s1 = loopUntilLand fall s0
-          loop upcoming s1
+drop1 :: State -> Set Pos -> State
+drop1 s0 u = do
+  let fall = place u s0
+  loopUntilLand fall s0
 
-    place :: Set Pos -> State -> Set Pos
-    place u s = do
-      Set.map (locate (3, height s + 4)) u
+place :: Set Pos -> State -> Set Pos
+place u s = do
+  Set.map (locate (3, height s + 4)) u
 
-    loopUntilLand :: Set Pos -> State -> State
-    loopUntilLand f0 s1 = do
-      let (f1,s2) = blow (f0,s1)
-      let f2 = Set.map moveDown f1
-      let imp = impossible f2 s2
-      if not imp then loopUntilLand f2 s2 else freeze f1 s2
+loopUntilLand :: Set Pos -> State -> State
+loopUntilLand f0 s1 = do
+  let (f1,s2) = blow (f0,s1)
+  let f2 = Set.map moveDown f1
+  let imp = impossible f2 s2
+  if not imp then loopUntilLand f2 s2 else freeze f1 s2
 
-    blow :: (Set Pos, State) -> (Set Pos, State)
-    blow (f0,s0@State{wind}) = do
-      case wind of
-        [] -> blow (f0, s0 { wind = wind0 })
-        w:wind -> do
-          let s1 = s0 { wind }
-          let move = case w of L -> moveLeft; R -> moveRight
-          let f1 = Set.map move f0
-          ((if impossible f1 s0 then f0 else f1), s1)
+blow :: (Set Pos, State) -> (Set Pos, State)
+blow (f0,s0@State{wind,wind0}) = do
+  case wind of
+    [] -> blow (f0, s0 { wind = wind0 })
+    w:wind -> do
+      let s1 = s0 { wind }
+      let move = case w of L -> moveLeft; R -> moveRight
+      let f1 = Set.map move f0
+      ((if impossible f1 s0 then f0 else f1), s1)
 
-    impossible :: Set Pos -> State -> Bool
-    impossible f State{solid} =
-      any (not . inBounds) f
-      || not (Set.null (f `Set.intersection` solid))
+impossible :: Set Pos -> State -> Bool
+impossible f State{solid} =
+  any (not . inBounds) f
+  || not (Set.null (f `Set.intersection` solid))
 
-    freeze :: Set Pos -> State -> State
-    freeze f s@State{solid} = do
-      s { solid = solid `Set.union` f }
-
-    initState :: State
-    initState = do
-       State
-        { wind = []
-        , solid = Set.empty
-        }
-
+freeze :: Set Pos -> State -> State
+freeze f s@State{solid} = do
+  s { solid = solid `Set.union` f }
 
 
 {-landscape :: Int -> State -> IO ()
