@@ -26,6 +26,7 @@ import qualified Day15
 import qualified Day16
 import qualified Day17
 import qualified Day18
+import qualified Day19
 import qualified Day20
 import qualified Day21
 
@@ -49,7 +50,7 @@ mains = zip [1..]
   , Day16.main
   , Day17.main
   , Day18.main
-  , print "day 19 -- TODO"
+  , Day19.main
   , Day20.main
   , Day21.main
   ]
