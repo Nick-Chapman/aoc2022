@@ -9,25 +9,29 @@ main = do
   _inp <- parse gram <$> readFile "input/day19.input"
 
   -- Too slow to run part1 on sample's 2nd blueprint...
-  --res <- part1 _sam
+  --res <- partX 24 _sam
   --print ("day19, part1 (sam)", check 33 $ res) -- 1*9 + 2*12
 
   -- But it works on my actual input!...
-  res <- part1 _inp
+  res <- partX 24 _inp
   print ("day19, part1", check 1480 $ res)
 
+  -- But too slow or part2...
+  --res <- partX 32 (take 3 _inp)
+  --print ("day19, part2", check 0 $ res)
 
-part1 :: Setup -> IO Int
-part1 xs = do
+
+partX :: Int -> Setup -> IO Int
+partX n xs = do
   print "part1"
-  qs <- mapM explore xs
+  qs <- mapM (explore n) xs
   pure (sum qs)
 
 
 type Res = [(State,Action)]
 
-explore :: Blue -> IO Int
-explore blue@Blue{index} = do
+explore :: Int -> Blue -> IO Int
+explore maxN blue@Blue{index} = do
   print ("explore",blue)
   let ss = actions >>= loop 0 state0
   let
@@ -49,7 +53,7 @@ explore blue@Blue{index} = do
 
     loop :: Int -> State -> Action -> Res
     loop n s0 aFirst = do
-      if n == 24 then [(s0,aFirst)] else do
+      if n == maxN then [(s0,aFirst)] else do
         builds n s0 aFirst
 
     builds :: Int -> State -> Action -> Res
