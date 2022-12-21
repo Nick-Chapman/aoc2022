@@ -67,7 +67,8 @@ initState wind0 = do
 part1 :: Setup -> Int
 part1 wind0 = do
   let s0 = initState wind0
-  height (dropN 2022 s0)
+  let inf = shapes ++ inf
+  height (dropList (take 2022 inf) s0)
 
 data V = V {bm :: Int, wm :: Int, steps :: [Int] } deriving (Eq,Ord,Show)
 data I = I {n :: Int, h:: Int} deriving Show
@@ -119,44 +120,28 @@ part2 wind0 = do
       let steps = [ abs (a-b) | (a,b) <- zip hs (tail hs) ]
       steps
 
-
 height :: State -> Int
 height State{solid} =
   maximum [ y | (_,y) <- (0,0) : Set.toList solid ]
 
-dropN :: Int -> State -> State
-dropN n s =
-  if n < 5 then dropList (take n shapes) s else dropN (n-5) (dropList shapes s)
-
 dropList :: [Set Pos] -> State -> State
-dropList us s =
-  foldl drop1 s us
+dropList us s = foldl drop1 s us
 
 drop1 :: State -> Set Pos -> State
-drop1 s0 u = do
-  let fall = place u s0
-  loopUntilLand fall s0
+drop1 s u = loopUntilLand (place u s) s
 
 place :: Set Pos -> State -> Set Pos
-place u s = do
-  Set.map (locate (3, height s + 4)) u
+place u s = Set.map (locate (3, height s + 4)) u
 
 loopUntilLand :: Set Pos -> State -> State
-loopUntilLand f0 s1 = do
-  let (f1,s2) = blow (f0,s1)
-  let f2 = Set.map moveDown f1
-  let imp = impossible f2 s2
-  if not imp then loopUntilLand f2 s2 else freeze f1 s2
-
-blow :: (Set Pos, State) -> (Set Pos, State)
-blow (f0,s0@State{wc,wind}) = do
-  case wind of
-    [] -> undefined
-    w:wind -> do
-      let s1 = s0 { wind, wc = wc + 1 }
-      let move = case w of L -> moveLeft; R -> moveRight
-      let f1 = Set.map move f0
-      ((if impossible f1 s0 then f0 else f1), s1)
+loopUntilLand f0 s0 = do
+  let State{wc,wind} = s0
+  let s1 = s0 { wind = tail wind, wc = wc + 1 }
+  let move = case head wind of L -> moveLeft; R -> moveRight
+  let f1 = Set.map move f0
+  let f2 = if impossible f1 s0 then f0 else f1
+  let f3 = Set.map moveDown f2
+  if impossible f3 s1 then freeze f2 s1 else loopUntilLand f3 s1
 
 impossible :: Set Pos -> State -> Bool
 impossible f State{solid} =
