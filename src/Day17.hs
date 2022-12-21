@@ -13,8 +13,10 @@ main = do
   inp <- parse gram <$> readFile "input/day17.input"
   print ("day17, part1 (sam)", check 3068 $ part1 sam)
   print ("day17, part1", check 3106 $ part1 inp)
-  print ("day17, part2 (sam)", check 1514285714288 $ part2 sam)
-  print ("day17, part2", check 1537175792495 $ part2 inp)
+  res <- part2 sam
+  print ("day17, part2 (sam)", check 1514285714288 $ res)
+  res <- part2 inp
+  print ("day17, part2", check 1537175792495 $ res)
 
 type Setup = [LR]
 data LR = L | R deriving Show
@@ -67,11 +69,11 @@ part1 wind0 = do
   let s0 = initState wind0
   height (dropN 2022 s0)
 
-data V = V {bm :: Int, wm :: Int } deriving (Eq,Ord,Show)
+data V = V {bm :: Int, wm :: Int, steps :: [Int] } deriving (Eq,Ord,Show)
 data I = I {n :: Int, h:: Int} deriving Show
 type M = Map V I
 
-part2 :: Setup -> Int
+part2 :: Setup -> IO Int
 part2 wind0 = do
   let s0 = initState wind0
   let inf = shapes ++ inf
@@ -79,20 +81,25 @@ part2 wind0 = do
   where
     wz = length wind0
 
-    loop :: M -> [Set Pos] -> Int -> State -> Int
+    loop :: M -> [Set Pos] -> Int -> State -> IO Int
     loop m upcoming n s = do
-      case flattish s of
+      let steps = landscape s
+      let flat = maximum steps <= 2
+      case flat of
         False ->
           loop m (tail upcoming) (n+1) (drop1 s (head upcoming))
         True -> do
           let State{wc} = s
-          let v = V { bm = n `mod` 5, wm = wc `mod` wz}
+          let v = V { bm = n `mod` 5, wm = wc `mod` wz, steps }
           let info = I { n, h = height s}
+          --print (v,info)
           case Map.lookup v m of
             Nothing -> do
               let m' = Map.insert v info m
               loop m' (tail upcoming) (n+1) (drop1 s (head upcoming))
             Just info1 -> do
+              --print info1
+              --print info
               let I{n=n1,h=h1} = info1
               let I{n=n2,h=h2} = info
               let nx = n2-n1
@@ -101,16 +108,16 @@ part2 wind0 = do
               let short = tril - (n1 + factor * nx)
               let s2 = dropList (take short upcoming) s
               let h3 = height s2
-              h1 + factor * (h2-h1) + (h3-h2)
+              pure $ h1 + factor * (h2-h1) + (h3-h2)
 
-    flattish :: State -> Bool
-    flattish State{solid} = do
+    landscape :: State -> [Int]
+    landscape State{solid} = do
       let ps = Set.toList solid
       let ys = [ maximum (0:[ y | (x,y) <- ps, x == c ]) | c <- [1..7]]
       let min = minimum ys
       let hs = [ y - min | y <- ys ]
       let steps = [ abs (a-b) | (a,b) <- zip hs (tail hs) ]
-      maximum steps == 2
+      steps
 
 
 height :: State -> Int
