@@ -12,9 +12,115 @@ main = do
   print ("day21, part1 (sam)", check 152 $ part1 sam)
   print ("day21, part1", check 104272990112064 $ part1 inp)
 
-  print ("day21, part2 (sam)", check 301 $ part2 sam)
-  --print ("day21, part2", check 0 $ part2 inp) -- no, too slow!
+  resS <- part2 sam
+  print ("day21, part2 (sam)", check 301 $ resS)
 
+  res <- part2_slow (resS-200) sam
+  print ("day21, part2 (sam)", check 301 $ res)
+
+  resI <- part2 inp
+  --print ("day21, part2", check (-928028391) $ res) -- WRONG
+  print ("day21, part2", check 165569196 $ resI) -- NOT TRIED, BUT WRONG
+
+  res <- part2_slow resI inp
+  print ("day21, part2", check 0 $ res)
+
+
+part2 :: Setup -> IO Int
+part2 lines = do
+  let
+    (ra,rb) =
+      the [ (a,b) | Line { dest = "root" , exp = Bin Add a b } <- lines ]
+
+    m = Map.fromList [ (dest,eval exp) | Line { dest, exp } <- lines ]
+
+    eval :: Exp -> V
+    eval = \case
+      Num n -> numV n
+      Bin op a b -> evalO op (evalN a) (evalN b)
+
+    evalO :: Op -> V -> V -> V
+    evalO = \case
+      Add -> addV
+      Sub -> subV
+      Mul -> mulV
+      Div -> divV
+
+    evalN :: Name -> V
+    evalN = \case
+      "humn" -> V { h = 1, k = 0, d = 1 }
+      x -> look x m
+
+  let v1 :: V = evalN ra
+  let v2 :: V = evalN rb
+  print v1
+  print v2
+  let res = equateV v1 v2
+  print ("res",res)
+  pure res
+
+equateV :: V -> V -> Int
+equateV (V h1 k1 d1) (V 0 k2 1) = (d1*k2 - k1) `div` h1
+equateV v1 v2 = error (show ("equate",v1,v2))
+
+numV :: Int -> V
+addV,subV,mulV,divV :: V -> V -> V
+
+data V = V { h :: Int, k :: Int, d :: Int } deriving Show
+numV k = V { h = 0, k, d = 1 }
+
+addV (V h1 k1 d1) (V h2 k2 d2) = mkV (h1*d2+h2*d1) (k1*d2+k2*d1) (d1*d2)
+subV (V h1 k1 d1) (V h2 k2 d2) = mkV (h1*d2-h2*d1) (k1*d2-k2*d1) (d1*d2)
+
+--mulV (V h1 k1 d1) (V 0 k2 1) = mkV (d1*k2*h1) (d1*k2*k1) d1
+--mulV (V 0 k1 1) (V h2 k2 d2) = mkV (d2*k1*h2) (d2*k1*k2) d2
+mulV (V h1 k1 d1) (V 0 k2 1) = mkV (k2*h1) (k2*k1) d1
+mulV (V 0 k1 1) (V h2 k2 d2) = mkV (k1*h2) (k1*k2) d2
+mulV v1 v2 = error (show ("mul",v1,v2))
+
+--divV (V 0 k1 d1) (V 0 k2 1) = V 0 k1 (d1*k2)
+
+divV (V h1 k1 d1) (V 0 k2 1) = mkV h1 k1 (d1*k2)
+--divV (V h1 k1 1) (V 0 k2 1) = mkV h1 k1 k2
+divV v1 v2 = error (show ("div",v1,v2))
+
+mkV :: Int -> Int -> Int -> V
+mkV 0 k d | d /= 0 = V 0 (k `div` d) 1
+mkV h k d = V h k d
+
+{-
+
+--addV (V h1 k1 1) (V h2 k2 1) = V (h1+h2) (k1+k2) 1
+--addV (V 0 k1 1) (V h2 k2 d2) = V h2 (k2+k1*d2) d2
+--addV (V h1 k1 d1) (V 0 k2 1) = V h1 (k1+k2*d1) d1
+
+--addV (V 0 k1 d1) (V 0 k2 d2) = V 0 (k1*d2+d1*k2) (d1*d2)
+--addV (V 0 k1 d1) (V 0 k2 1) = V 0 (k1+d1*k2) d1  -- subsumed
+--addV (V 0 k1 1) (V 0 k2 d2) = V 0 (k2+d2*k1) d2  -- subsumed
+
+--addV v1 v2 = error (show ("add",v1,v2))
+
+--subV (V h1 k1 d1) (V 0 k2 d2) = V (h1*d2) (k1*d2-d1*k2) (d1*d2) --subsumbed
+--subV (V 0 k1 d1) (V 0 k2 d2) = V 0 (k1*d2-d1*k2) (d1*d2) --subsumed
+--subV (V 0 k1 d1) (V 0 k2 1) = V 0 (k1-d1*k2) d1 -- subsumed
+
+--subV (V h1 k1 1) (V h2 k2 1) = V (h1-h2) (k1-k2) 1
+--subV (V h1 k1 d1) (V 0 k2 1) = V h1 (k1-k2*d1) d1
+--subV (V 0 k1 1) (V h2 k2 d2) = V (-h2) (k2-k1*d2) d2
+--subV v1 v2 = error (show ("sub",v1,v2))
+
+
+--mulV (V 0 k1 1) (V h2 k2 1) = V (k1*h2) (k1*k2) 1 --subsumed
+
+--mulV (V 0 k1 1) (V h2 k2 d2) = V (k1*h2) (k1*k2) d2
+--mulV (V h1 k1 d1) (V 0 k2 1) = V (h1*k2) (k1*k2) d1
+
+--divV (V 0 k1 1) (V 0 k2 1) = V 0 (k1 `div` k2) 1
+--divV (V h1 k1 d1) (V 0 k2 1) = V h1 k1 (d1*k2)
+
+--divV (V h1 k1 1) (V 0 k2 1) = V h1 k1 k2 --subsumed
+
+-}
 
 part1 :: Setup -> Int
 part1 lines = do
@@ -38,9 +144,8 @@ part1 lines = do
 
   evalN "root"
 
-
-part2 :: Setup -> Int
-part2 lines = do
+part2_slow :: Int -> Setup -> IO Int
+part2_slow clue lines = do
 
   let
     (ra,rb) =
@@ -70,7 +175,15 @@ part2 lines = do
 
       evalN ra == evalN rb
 
-  head [ n | n <- [0..], test n ]
+  let
+    loop offset = do
+      if offset `mod` 100 == 0 then print (clue+offset,clue-offset) else pure ()
+      if test (clue+offset) then pure (clue+offset) else
+        if test (clue-offset) then pure (clue-offset) else
+          loop (offset+1)
+
+  --pure $ head [ n | n <- [clue..], test n ]
+  loop 0
 
 
 type Setup = [Line]
