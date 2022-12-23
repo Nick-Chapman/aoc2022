@@ -23,3 +23,5 @@ My solutions for Advent of Code 2022
 [day19](src/Day19.hs)
 [day20](src/Day20.hs)
 [day21](src/Day21.hs)
+
+[day23](src/Day23.hs)
