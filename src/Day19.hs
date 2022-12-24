@@ -28,12 +28,12 @@ partX n xs = do
   pure (sum qs)
 
 
-type Res = [(State,Action)]
+type Res = [State]
 
 explore :: Int -> Blue -> IO Int
 explore maxN blue@Blue{index} = do
   print ("explore",blue)
-  let ss = actions >>= loop 0 state0
+  let ss = loop 0 state0
   let
     see :: Int -> Int -> Res -> IO Int
     see gMax n = \case
@@ -42,30 +42,30 @@ explore maxN blue@Blue{index} = do
         print ("index:",index,"gMax:",gMax,"--> quality:",q)
         pure q
 
-      (s@State{g},_act):more -> do
-        if g > gMax then print (n,s) else pure ()
+      State{g}:more -> do
+        if g > gMax then print (g,n) else pure ()
         see (max g gMax) (n+1) more
 
   see 0 1 ss
   where
 
-    actions = [G,B,R,C]
+    loop :: Int -> State -> Res
+    loop n s = do
+      {-case build G blue s of
+        Just s -> do
+          loop (n+1) (advance s)
+        Nothing -> do-}
+          a <- [G,B,R,C]
+          loopA n s a
 
-    loop :: Int -> State -> Action -> Res
-    loop n s0 aFirst = do
-      if n == maxN then [(s0,aFirst)] else do
-        builds n s0 aFirst
-
-    builds :: Int -> State -> Action -> Res
-    builds n s a = do
-      let! opt = build a blue s
-      case opt of
-        Just s0 -> do
-          let! s = s0
-          --actions >>= builds n s -- allow multiple builds in a minute!
-          actions >>= loop (n+1) (advance s)
-        Nothing -> do
-          loop (n+1) (advance s) a
+    loopA :: Int -> State -> Action -> Res
+    loopA n s a = do
+      if n == maxN then [s] else do
+        case build a blue s of
+          Just s -> do
+            loop (n+1) (advance s)
+          Nothing -> do
+            loopA (n+1) (advance s) a
 
 
 data Action = N | R | C | B | G deriving Show
@@ -76,7 +76,7 @@ build = \case
   C -> buildC
   B -> buildB
   G -> buildG
-  N -> undefined
+  N -> \_ -> Just
 
 buildR :: Blue -> State -> Maybe State
 buildR Blue{rr_cost=rUse} s@State{r,xrr,did} = do
