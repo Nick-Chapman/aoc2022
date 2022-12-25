@@ -8,6 +8,9 @@ import Data.Map (Map)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 
+import Data.Array (Array,(!),listArray)
+
+
 main :: IO ()
 main = do
   sam <- parse gram <$> readFile "input/day24.sam"
@@ -66,7 +69,8 @@ search w node (tx,ty) = loop 0 (initSS w node)
       let (_c,ns,ss1) = expandSS ss
       let reached = [ p | p <- Set.toList ns, reachGoal p ]
       let finished = not (null reached)
-      --print ("loop",i,_c,ns,finished, listToMaybe reached)
+      --print ("loop",i,_c,ns)
+      --print ("loop",i,_c)
       case finished of
         True -> do
           pure (the reached)
@@ -76,7 +80,7 @@ search w node (tx,ty) = loop 0 (initSS w node)
           loop (i+1) ss2
 
 
-data World = World { winds :: [BlizzardMap]
+data World = World { winds :: Array Int BlizzardMap
                    , width :: Int
                    , height :: Int
                    , start :: Pos
@@ -90,7 +94,8 @@ initWorld css = do
   let start = (0,-1)
   let target = (width-1,height)
   let bm0 = initBM css
-  let winds = iterate (stepBM w) bm0
+  let windsL = iterate (stepBM w) bm0
+      winds = listArray (0,1000) windsL
       w = World { winds, width, height, start, target }
   pure w
 
@@ -150,7 +155,7 @@ inBounds World{width,height,start,target} p@(x,y) =
 
 windy :: World -> Node -> Bool
 windy World{winds} Node{x,y,t} =
-  (winds !! t) `hasBlizzardAt` (x,y)
+  (winds ! t) `hasBlizzardAt` (x,y)
 
 initBM :: Setup -> BlizzardMap
 initBM css = do
