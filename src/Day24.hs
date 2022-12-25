@@ -16,6 +16,11 @@ main = do
   print ("day24, part1 (sam)", check 18 $ res)
   res <- part1 inp
   print ("day24, part1", check 322 $ res)
+  res <- part2 sam
+  print ("day24, part2 (sam)", check 54 $ res)
+  res <- part2 inp
+  print ("day24, part2", check 974 $ res)
+
 
 type Setup = [String]
 
@@ -29,19 +34,34 @@ gram = terminated nl line
 part1 :: Setup -> IO Int
 part1 setup = do
   w <- initWorld setup
-  res <- search w
-  pure res
+  let World{start=(x,y),target} = w
+  Node{t} <- search w Node{x,y,t=0} target
+  pure t
 
 
-search :: World -> IO Int
-search w = loop 0 (initSS w)
+part2 :: Setup -> IO Int
+part2 setup = do
+  w <- initWorld setup
+  let World{start=start@(x,y),target} = w
+  let n0 = Node{x,y,t=0}
+  n1 <- search w n0 target
+  --print ("n1",n1)
+  n2 <- search w n1 start
+  --print ("n2",n2)
+  n3 <- search w n2 target
+  --print ("n2",n3)
+  let Node{t} = n3
+  pure t
+
+
+search :: World -> Node -> Pos -> IO Node
+search w node (tx,ty) = loop 0 (initSS w node)
   where
-    World{target=(tx,ty)} = w
 
     reachGoal :: Node -> Bool
     reachGoal Node{x,y} = x==tx && y==ty
 
-    loop :: Int -> SS -> IO Int
+    loop :: Int -> SS -> IO Node
     loop i ss = do
       let (_c,ns,ss1) = expandSS ss
       let reached = [ p | p <- Set.toList ns, reachGoal p ]
@@ -49,8 +69,7 @@ search w = loop 0 (initSS w)
       --print ("loop",i,_c,ns,finished, listToMaybe reached)
       case finished of
         True -> do
-          let Node{t} = the reached
-          pure t
+          pure (the reached)
         False -> do
           let ns' = [ n' | n <- Set.toList ns, n' <- stepN w n ]
           let ss2 = foldl (insertSS w) ss1 ns'
@@ -73,10 +92,6 @@ initWorld css = do
   let bm0 = initBM css
   let winds = iterate (stepBM w) bm0
       w = World { winds, width, height, start, target }
-  --print (width,height)
-  --print (start,target)
-  --print bm0
-  --print (stepBM w bm0)
   pure w
 
 
@@ -102,9 +117,8 @@ expandSS (SS m) = do
     Just ((c,ns),m) -> (c,ns,SS m)
 
 
-initSS :: World -> SS
-initSS w@World{start=(x,y)} = do
-  let node = Node {x,y,t=0}
+initSS :: World -> Node -> SS
+initSS w node = do
   insertSS w emptySS node
 
 computeCost :: World -> Node -> Int
@@ -131,8 +145,8 @@ stepN w Node{x,y,t} =
   ]
 
 inBounds :: World -> Pos -> Bool
-inBounds World{width,height,target} p@(x,y) =
-  p == target || (x >= 0 && x < width && y >=0 && y < height)
+inBounds World{width,height,start,target} p@(x,y) =
+  p == start || p == target || (x >= 0 && x < width && y >=0 && y < height)
 
 windy :: World -> Node -> Bool
 windy World{winds} Node{x,y,t} =
