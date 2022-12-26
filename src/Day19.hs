@@ -6,56 +6,44 @@ import Par4 (Par,parse,terminated,nl,key,int)
 main :: IO ()
 main = do
   _sam <- parse gram <$> readFile "input/day19.sam"
-  _inp <- parse gram <$> readFile "input/day19.input"
-
+  inp <- parse gram <$> readFile "input/day19.input"
+{-
   res <- part1 _sam [9,12]
   print ("day19, part1 (sam)", check 33 $ res)
-
-  res <- part1 _inp [0,5,0,0,0,5,0,2,1,0,2,3,3,7,1,9,0,1,0,0,0,9,4,5,8,2,2,1,1,9]
-  print ("day19, part1", check 1480 $ res)
-
-
-{-
-  let expected = [56,62]
-  --res <- _part2 (drop 1 _sam) (drop 1 expected)
-  res <- _part2 _sam expected
-  print ("day19, part2", check (56*62) $ res)
-
-
-  let expected = [0,0,0]
-  res <- _part2 (take 3 _inp) expected
-  print ("day19, part2", check 0 $ res)
 -}
+  res <- part1 inp [0,5,0,0,0,5,0,2,1,0,2,3,3,7,1,9,0,1,0,0,0,9,4,5,8,2,2,1,1,9]
+  print ("day19, part1", check 1480 $ res)
+{-
+  res <- _part2 _sam [56,62]
+  print ("day19, part2", check (56*62) $ res)
+-}
+  res <- part2 (take 3 inp) [6,44,12]
+  print ("day19, part2", check (6*44*12) $ res)
 
 part1 :: Setup -> [Int] -> IO Int
 part1 xs expected = do
-  print "part1"
   let maxN = 24
   gs <- mapM (explore maxN) (zip xs expected)
   pure $ sum [ g * i | (i,g) <- zip [1::Int ..] gs ]
 
-_part2 :: Setup -> [Int] -> IO Int
-_part2 xs expected = do
-  print "part2"
+part2 :: Setup -> [Int] -> IO Int
+part2 xs expected = do
   let maxN = 32
   gs <- mapM (explore maxN) (zip xs expected)
   pure $ product gs
 
-
 type Res = [State]
 
 explore :: Int -> (Blue,Int) -> IO Int
-explore maxN (blue@Blue{index=_index},_expected) = do
-  print ("explore",_index)
+explore maxN (blue@Blue{index=_index},expected) = do
+  --print ("explore",_index)
   let ss = loop 0 state0
   let
     see :: Int -> Int -> Res -> IO Int
     see gMax n = \case
-      [] -> do
-        pure (check gMax _expected)
-
+      [] -> pure (check gMax expected)
       State{g}:more -> do
-        if g > gMax then print (g,n) else pure ()
+        let! _ = if g > gMax then print (g,n) else pure ()
         see (max g gMax) (n+1) more
 
   see 0 1 ss
@@ -63,15 +51,19 @@ explore maxN (blue@Blue{index=_index},_expected) = do
     loop :: Int -> State -> [State]
     loop n s = do
       if n == maxN then [s] else do
-        a <- [G,B,R,C]
+        a <- [B,R,C]
         loopA a n s
 
     loopA :: Action -> Int -> State -> [State]
     loopA a n s = do
       if n == maxN then [s] else do
-        case build a blue s of
-          Just s -> loop (n+1) (advance s)
-          Nothing -> loopA a (n+1) (advance s)
+        -- Heuristic #1: Always build a geode cracker if we can.
+        case build G blue s of
+          Just s -> loopA a(n+1) (advance s)
+          Nothing -> do
+            case build a blue s of
+              Just s -> loop (n+1) (advance s)
+              Nothing -> loopA a (n+1) (advance s)
 
 
 data Action = R | C | B | G deriving Show
@@ -85,7 +77,8 @@ build = \case
 
 buildR :: Blue -> State -> Maybe State
 buildR Blue{rr_cost=rUse} s@State{rr,r,xrr,did} = do
-  if rr >= 4 then Nothing else -- YES, this is the line we need.
+  -- Heuristic #2: Never buy more that 4 oRe Robots.
+  if rr >= 4 then Nothing else
     if rUse > r then Nothing else
       Just s { xrr = xrr + 1, r = r - rUse, did = R : did }
 
@@ -103,7 +96,6 @@ buildG :: Blue -> State -> Maybe State
 buildG Blue{gr_cost=(rUse,bUse)} s@State{r,b,xgr,did} = do
   if rUse > r || bUse > b then Nothing else
     Just s { xgr = xgr + 1, r = r - rUse, b = b - bUse, did = G : did }
-
 
 data State = State
   { r :: Int -- #oRe
