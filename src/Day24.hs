@@ -13,14 +13,14 @@ import Data.Array (Array,(!),listArray)
 
 main :: IO ()
 main = do
-  sam <- parse gram <$> readFile "input/day24.sam"
+  --sam <- parse gram <$> readFile "input/day24.sam"
   inp <- parse gram <$> readFile "input/day24.input"
-  res <- part1 sam
-  print ("day24, part1 (sam)", check 18 $ res)
+  --res <- part1 sam
+  --print ("day24, part1 (sam)", check 18 $ res)
   res <- part1 inp
   print ("day24, part1", check 322 $ res)
-  res <- part2 sam
-  print ("day24, part2 (sam)", check 54 $ res)
+  --res <- part2 sam
+  --print ("day24, part2 (sam)", check 54 $ res)
   res <- part2 inp
   print ("day24, part2", check 974 $ res)
 

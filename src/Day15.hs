@@ -7,11 +7,11 @@ import RangeISet (Set,empty,fromRange,union,removeElem,size,invert,toList)
 
 main :: IO ()
 main = do
-  sam <- parse gram <$> readFile "input/day15.sam"
+  --sam <- parse gram <$> readFile "input/day15.sam"
   inp <- parse gram <$> readFile "input/day15.input"
-  print ("day15, part1 (sam)", check 26 $ part1 10 sam)
+  --print ("day15, part1 (sam)", check 26 $ part1 10 sam)
   print ("day15, part1", check 5716881 $ part1 2000000 inp)
-  print ("day15, part2 (sam)", check 56000011 $ part2 20 sam)
+  --print ("day15, part2 (sam)", check 56000011 $ part2 20 sam)
   print ("day15, part2", check 10852583132904 $ part2 4000000 inp)
 
 part1 :: Int -> Setup -> Int

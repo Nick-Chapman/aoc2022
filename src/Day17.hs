@@ -9,12 +9,12 @@ import qualified Data.Map.Strict  as Map
 
 main :: IO ()
 main = do
-  sam <- parse gram <$> readFile "input/day17.sam"
+  --sam <- parse gram <$> readFile "input/day17.sam"
   inp <- parse gram <$> readFile "input/day17.input"
-  print ("day17, part1 (sam)", check 3068 $ part1 sam)
+  --print ("day17, part1 (sam)", check 3068 $ part1 sam)
   print ("day17, part1", check 3106 $ part1 inp)
-  res <- part2 sam
-  print ("day17, part2 (sam)", check 1514285714288 $ res)
+  --res <- part2 sam
+  --print ("day17, part2 (sam)", check 1514285714288 $ res)
   res <- part2 inp
   print ("day17, part2", check 1537175792495 $ res)
 

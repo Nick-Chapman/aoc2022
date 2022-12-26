@@ -5,11 +5,11 @@ import Par4 (Par,parse,terminated,nl,opt,lit,int)
 
 main :: IO ()
 main = do
-  sam <- parse gram <$> readFile "input/day20.sam"
+  --sam <- parse gram <$> readFile "input/day20.sam"
   inp <- parse gram <$> readFile "input/day20.input"
-  print ("day20, part1 (sam)", check 3 $ part1 sam)
+  --print ("day20, part1 (sam)", check 3 $ part1 sam)
   print ("day20, part1", check 6712 $ part1 inp)
-  print ("day20, part2 (sam)", check 1623178306 $ part2 sam)
+  --print ("day20, part2 (sam)", check 1623178306 $ part2 sam)
   print ("day20, part2", check 1595584274798 $ part2 inp)
     where
       part1 = partX 1 1

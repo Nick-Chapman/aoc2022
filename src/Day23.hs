@@ -9,11 +9,11 @@ import qualified Data.Set as Set
 
 main :: IO ()
 main = do
-  sam <- parse gram <$> readFile "input/day23.sam"
+  --sam <- parse gram <$> readFile "input/day23.sam"
   inp <- parse gram <$> readFile "input/day23.input"
-  print ("day23, part1 (sam)", check 110 $ part1 sam)
+  --print ("day23, part1 (sam)", check 110 $ part1 sam)
   print ("day23, part1", check 4195 $ part1 inp)
-  print ("day23, part2 (sam)", check 20 $ part2 sam)
+  --print ("day23, part2 (sam)", check 20 $ part2 sam)
   print ("day23, part2", check 1069 $ part2 inp)
 
 part1 :: Setup -> Int

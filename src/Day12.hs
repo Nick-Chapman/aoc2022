@@ -9,12 +9,12 @@ import qualified Data.Set as Set
 
 main :: IO ()
 main = do
-  sam <- lines <$> readFile "input/day12.sam"
+  --sam <- lines <$> readFile "input/day12.sam"
   inp <- lines <$> readFile "input/day12.input"
 
-  print ("day12, part1 (sam)", check 31 $ part1 sam)
+  --print ("day12, part1 (sam)", check 31 $ part1 sam)
   print ("day12, part1", check 394 $ part1 inp)
-  print ("day12, part2 (sam)", check 29 $ part2 sam)
+  --print ("day12, part2 (sam)", check 29 $ part2 sam)
   print ("day12, part2", check 388 $ part2 inp)
 
 data World = World -- start from 'E', search backwards to 'S' or 'a'

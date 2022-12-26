@@ -9,12 +9,12 @@ import qualified Data.List  as List
 
 main :: IO ()
 main = do
-  sam <- parse gram <$> readFile "input/day11.sam"
+  --sam <- parse gram <$> readFile "input/day11.sam"
   inp <- parse gram <$> readFile "input/day11.input"
 
-  print ("day11, part1 (sam)", check 10605 $ part1 sam)
+  --print ("day11, part1 (sam)", check 10605 $ part1 sam)
   print ("day11, part1", check 108240 $ part1 inp)
-  print ("day11, part2 (sam)", check 2713310158 $ part2 sam)
+  --print ("day11, part2 (sam)", check 2713310158 $ part2 sam)
   print ("day11, part2", check 25712998901 $ part2 inp)
 
   where

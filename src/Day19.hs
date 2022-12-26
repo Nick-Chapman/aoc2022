@@ -5,18 +5,18 @@ import Par4 (Par,parse,terminated,nl,key,int)
 
 main :: IO ()
 main = do
-  _sam <- parse gram <$> readFile "input/day19.sam"
+  --sam <- parse gram <$> readFile "input/day19.sam"
   inp <- parse gram <$> readFile "input/day19.input"
-{-
-  res <- part1 _sam [9,12]
-  print ("day19, part1 (sam)", check 33 $ res)
--}
+
+  --res <- part1 sam [9,12]
+  --print ("day19, part1 (sam)", check 33 $ res)
+
   res <- part1 inp [0,5,0,0,0,5,0,2,1,0,2,3,3,7,1,9,0,1,0,0,0,9,4,5,8,2,2,1,1,9]
   print ("day19, part1", check 1480 $ res)
-{-
-  res <- _part2 _sam [56,62]
-  print ("day19, part2", check (56*62) $ res)
--}
+
+  --res <- part2 sam [56,62]
+  --print ("day19, part2 (sam)", check (56*62) $ res)
+
   res <- part2 (take 3 inp) [6,44,12]
   print ("day19, part2", check (6*44*12) $ res)
 

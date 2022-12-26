@@ -8,11 +8,11 @@ import qualified Data.Set as Set (fromList)
 
 main :: IO ()
 main = do
-  sam <- parse gram <$> readFile "input/day14.sam"
+  --sam <- parse gram <$> readFile "input/day14.sam"
   inp <- parse gram <$> readFile "input/day14.input"
-  print ("day14, part1 (sam)", check 24 $ part1 sam)
+  --print ("day14, part1 (sam)", check 24 $ part1 sam)
   print ("day14, part1", check 964 $ part1 inp)
-  print ("day14, part2 (sam)", check 93 $ part2 sam)
+  --print ("day14, part2 (sam)", check 93 $ part2 sam)
   print ("day14, part2", check 32041 $ part2 inp)
   where
     part1 = partX Part1

@@ -11,16 +11,16 @@ import qualified Data.Set as Set
 
 main :: IO ()
 main = do
-  sam <- parse gram <$> readFile "input/day16.sam"
+  --sam <- parse gram <$> readFile "input/day16.sam"
   _inp <- parse gram <$> readFile "input/day16.input"
-  res <- part1 sam
-  print ("day16, part1 (sam)", check 1651 $ res)
+  --res <- part1 sam
+  --print ("day16, part1 (sam)", check 1651 $ res)
 
   res <- part1 _inp
   print ("day16, part1", check 1741 $ res) -- **NOT 1739**
 
-  res <- part2 sam
-  print ("day16, part2 (sam)", check 1707 $ res)
+  --res <- _part2 sam
+  --print ("day16, part2 (sam)", check 1707 $ res)
 
   --res <- part2 _inp -- TOO SLOW FOR THIS
   --print ("day16, part2", check 999 $ res)
@@ -91,8 +91,8 @@ searchTop1 World{step,flow,toOpen=toOpen0} = search ("*","AA",30,toOpen0)
             pure res
 
 
-part2 :: Setup -> IO Int
-part2 xs = do
+_part2 :: Setup -> IO Int
+_part2 xs = do
   let w = initWorld xs
   (res,_ticks) <- run (searchTop2 w)
   --print ("ticks",_ticks)
