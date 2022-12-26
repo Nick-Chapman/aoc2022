@@ -8,39 +8,51 @@ main = do
   _sam <- parse gram <$> readFile "input/day19.sam"
   _inp <- parse gram <$> readFile "input/day19.input"
 
-  -- Too slow to run part1 on sample's 2nd blueprint...
-  --res <- partX 24 _sam
-  --print ("day19, part1 (sam)", check 33 $ res) -- 1*9 + 2*12
+  res <- part1 _sam [9,12]
+  print ("day19, part1 (sam)", check 33 $ res)
 
-  -- But it works on my actual input!...
-  res <- partX 24 _inp
+  res <- part1 _inp [0,5,0,0,0,5,0,2,1,0,2,3,3,7,1,9,0,1,0,0,0,9,4,5,8,2,2,1,1,9]
   print ("day19, part1", check 1480 $ res)
 
-  -- But too slow or part2...
-  --res <- partX 32 (take 3 _inp)
-  --print ("day19, part2", check 0 $ res)
+
+{-
+  let expected = [56,62]
+  --res <- _part2 (drop 1 _sam) (drop 1 expected)
+  res <- _part2 _sam expected
+  print ("day19, part2", check (56*62) $ res)
 
 
-partX :: Int -> Setup -> IO Int
-partX n xs = do
+  let expected = [0,0,0]
+  res <- _part2 (take 3 _inp) expected
+  print ("day19, part2", check 0 $ res)
+-}
+
+part1 :: Setup -> [Int] -> IO Int
+part1 xs expected = do
   print "part1"
-  qs <- mapM (explore n) xs
-  pure (sum qs)
+  let maxN = 24
+  gs <- mapM (explore maxN) (zip xs expected)
+  pure $ sum [ g * i | (i,g) <- zip [1::Int ..] gs ]
+
+_part2 :: Setup -> [Int] -> IO Int
+_part2 xs expected = do
+  print "part2"
+  let maxN = 32
+  gs <- mapM (explore maxN) (zip xs expected)
+  pure $ product gs
 
 
 type Res = [State]
 
-explore :: Int -> Blue -> IO Int
-explore maxN blue@Blue{index} = do
-  print ("explore",blue)
+explore :: Int -> (Blue,Int) -> IO Int
+explore maxN (blue@Blue{index=_index},_expected) = do
+  print ("explore",_index)
   let ss = loop 0 state0
   let
     see :: Int -> Int -> Res -> IO Int
     see gMax n = \case
       [] -> do
-        let q = index * gMax
-        print ("index:",index,"gMax:",gMax,"--> quality:",q)
-        pure q
+        pure (check gMax _expected)
 
       State{g}:more -> do
         if g > gMax then print (g,n) else pure ()
@@ -48,27 +60,21 @@ explore maxN blue@Blue{index} = do
 
   see 0 1 ss
   where
-
-    loop :: Int -> State -> Res
+    loop :: Int -> State -> [State]
     loop n s = do
-      {-case build G blue s of
-        Just s -> do
-          loop (n+1) (advance s)
-        Nothing -> do-}
-          a <- [G,B,R,C]
-          loopA n s a
+      if n == maxN then [s] else do
+        a <- [G,B,R,C]
+        loopA a n s
 
-    loopA :: Int -> State -> Action -> Res
-    loopA n s a = do
+    loopA :: Action -> Int -> State -> [State]
+    loopA a n s = do
       if n == maxN then [s] else do
         case build a blue s of
-          Just s -> do
-            loop (n+1) (advance s)
-          Nothing -> do
-            loopA (n+1) (advance s) a
+          Just s -> loop (n+1) (advance s)
+          Nothing -> loopA a (n+1) (advance s)
 
 
-data Action = N | R | C | B | G deriving Show
+data Action = R | C | B | G deriving Show
 
 build :: Action -> Blue -> State -> Maybe State
 build = \case
@@ -76,12 +82,12 @@ build = \case
   C -> buildC
   B -> buildB
   G -> buildG
-  N -> \_ -> Just
 
 buildR :: Blue -> State -> Maybe State
-buildR Blue{rr_cost=rUse} s@State{r,xrr,did} = do
-  if rUse > r then Nothing else
-    Just s { xrr = xrr + 1, r = r - rUse, did = R : did }
+buildR Blue{rr_cost=rUse} s@State{rr,r,xrr,did} = do
+  if rr >= 4 then Nothing else -- YES, this is the line we need.
+    if rUse > r then Nothing else
+      Just s { xrr = xrr + 1, r = r - rUse, did = R : did }
 
 buildC :: Blue -> State -> Maybe State
 buildC Blue{cr_cost=rUse} s@State{r,xcr,did} = do
@@ -89,7 +95,7 @@ buildC Blue{cr_cost=rUse} s@State{r,xcr,did} = do
     Just s { xcr = xcr + 1, r = r - rUse, did = C : did }
 
 buildB :: Blue -> State -> Maybe State
-buildB Blue{br_cost=(rUse,cUse)} s@State{r,c,xbr,did} = do
+buildB Blue{br_cost=(rUse,cUse)} s@State{br=_,r,c,xbr,did} = do
   if rUse > r || cUse > c then Nothing else
     Just s { xbr = xbr + 1, r = r - rUse, c = c - cUse, did = B : did }
 
