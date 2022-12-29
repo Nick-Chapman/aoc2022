@@ -11,19 +11,13 @@ import qualified Data.Set as Set
 
 main :: IO ()
 main = do
-  --sam <- parse gram <$> readFile "input/day16.sam"
-  _inp <- parse gram <$> readFile "input/day16.input"
-  --res <- part1 sam
-  --print ("day16, part1 (sam)", check 1651 $ res)
+  sam <- parse gram <$> readFile "input/day16.sam"
+  inp <- parse gram <$> readFile "input/day16.input"
 
-  res <- part1 _inp
-  print ("day16, part1", check 1741 $ res) -- **NOT 1739**
-
-  --res <- _part2 sam
-  --print ("day16, part2 (sam)", check 1707 $ res)
-
-  --res <- part2 _inp -- TOO SLOW FOR THIS
-  --print ("day16, part2", check 999 $ res)
+  res <- part1 sam
+  print ("day16, part1 (sam)", check 1651 $ res)
+  res <- part1 inp
+  print ("day16, part1", check 1741 $ res)
 
   pure ()
 
@@ -67,7 +61,7 @@ part1 :: Setup -> IO Int
 part1 xs = do
   let w = initWorld xs
   (res,_ticks) <- run (searchTop1 w)
-  --print ("ticks",_ticks)
+  print ("ticks",_ticks)
   pure res
 
 searchTop1 :: World -> Eff Int
@@ -89,107 +83,6 @@ searchTop1 World{step,flow,toOpen=toOpen0} = search ("*","AA",30,toOpen0)
             let res = maximum xs
             SetCache key res
             pure res
-
-
-_part2 :: Setup -> IO Int
-_part2 xs = do
-  let w = initWorld xs
-  (res,_ticks) <- run (searchTop2 w)
-  --print ("ticks",_ticks)
-  pure res
-
-searchTop2 :: World -> Eff Int
-searchTop2 w@World{toOpen=toOpen0} = search ("AA","AA",26,toOpen0)
-  where
-    search :: Key -> Eff Int
-    search key@(aa,bb,n,toOpen) = do
-     if bb < aa then search (bb,aa,n,toOpen) else do
-      Tick
-      --Log key
-      if n < 2 || Set.null toOpen then pure 0 else do
-        GetCache key >>= \case
-          Just res -> do
-            pure res
-          Nothing -> do
-            let bs = [ (q+) <$> search key' | (q,key') <- explore w key ]
-            xs <- sequence bs
-            let res = maximum xs
-            SetCache key res
-            pure res
-
-explore :: World -> Key -> [(Int,Key)]
-explore World{step,flow} (ele,me,n,toOpen) = do
-  let qm = (n-1) * flow me
-  let qe = (n-1) * flow ele
-  if
-    | me == ele -> do
-        let tryOpen = ele `Set.member` toOpen
-        if
-          | tryOpen -> do -- ele will wlays be the one to do the open
-              let as = [ (qe,(ele, me',n-1,Set.delete ele toOpen))
-                       | me' <- step me
-                       ]
-              let bs = [ (0,(ele',me',n-1,toOpen))
-                       | me' <- step me
-                       , ele' <- step ele
-                       ]
-              (as ++ bs)
-          | otherwise -> do
-              let bs = [ (0,(ele',me',n-1,toOpen))
-                       | me' <- step me
-                       , ele' <- step ele
-                       ]
-              bs
-
-    | otherwise -> do
-        let meCanOpen = me `Set.member` toOpen
-        let eleCanOpen = ele `Set.member` toOpen
-
-        case (meCanOpen,eleCanOpen) of
-          (False,False) -> do
-              let bs = [ (0,(ele',me',n-1,toOpen)) -- we both step
-                       | me' <- step me
-                       , ele' <- step ele
-                       ]
-              bs
-
-          (False,True) -> do
-              let as = [ (qe,(ele,me',n-1,Set.delete ele toOpen)) -- ele opens; I step
-                       | me' <- step me
-                       ]
-              let bs = [ (0,(ele',me',n-1,toOpen)) -- we both step
-                       | me' <- step me
-                       , ele' <- step ele
-                       ]
-              (as ++ bs)
-
-          (True,False) -> do
-              let as = [ (qm,(ele',me,n-1,Set.delete me toOpen)) -- I open; ele steps
-                       | ele' <- step ele
-                       ]
-              let bs = [ (0,(ele',me',n-1,toOpen)) -- we both step
-                       | me' <- step me
-                       , ele' <- step ele
-                       ]
-              (as ++ bs)
-
-
-          (True,True) -> do
-              let as = [ (qe+qm,(ele,me,n-1,Set.delete ele (Set.delete me toOpen))) ] -- both open
-              let bs = [ (qe,(ele,me',n-1,Set.delete ele toOpen)) -- ele opens; I step
-                       | me' <- step me
-                       ]
-              let cs = [ (qm,(ele',me,n-1,Set.delete me toOpen)) -- I open; ele steps
-                       | ele' <- step ele
-                       ]
-              let ds = [ (0,(ele',me',n-1,toOpen)) -- we both step
-                       | me' <- step me
-                       , ele' <- step ele
-                       ]
-              (as ++ bs ++ cs ++ ds)
-
-
-
 
 data Eff x where -- search effect
   Ret :: x -> Eff x
