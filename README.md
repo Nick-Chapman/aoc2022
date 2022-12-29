@@ -23,7 +23,7 @@
 [day19](src/Day19.hs)
 [day20](src/Day20.hs)
 [day21](src/Day21.hs)
-day22
+[day22](src/Day22.hs)
 [day23](src/Day23.hs)
 [day24](src/Day24.hs)
 [day25](src/Day25.hs)
@@ -51,7 +51,7 @@ day22
 - Day 19: Not Enough Minerals [desc](https://adventofcode.com/2022/day/19) [solution](src/Day19.hs)
 - Day 20: Grove Positioning System [desc](https://adventofcode.com/2022/day/20) [solution](src/Day20.hs)
 - Day 21: Monkey Math [desc](https://adventofcode.com/2022/day/21) [solution](src/Day21.hs)
-- Day 22: Monkey Map [desc](https://adventofcode.com/2022/day/22) no solution yet
+- Day 22: Monkey Map [desc](https://adventofcode.com/2022/day/22) [solution](src/Day22.hs)
 - Day 23: Unstable Diffusion [desc](https://adventofcode.com/2022/day/23) [solution](src/Day23.hs)
 - Day 24: Blizzard Basin [desc](https://adventofcode.com/2022/day/24) [solution](src/Day24.hs)
 - Day 25: Full of Hot Air [desc](https://adventofcode.com/2022/day/25) [solution](src/Day25.hs)
