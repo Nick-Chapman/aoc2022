@@ -13,17 +13,155 @@ main :: IO ()
 main = do
   sam <- parse gram <$> readFile "input/day22.sam"
   inp <- parse gram <$> readFile "input/day22.input"
-  print ("day22, part1 (sam)", check 6032 $ part1 sam)
-  print ("day22, part1", check 27492 $ part1 inp)
+  res <- part1 sam
+  print ("day22, part1 (sam)", check 6032 $ res)
+  res <- part1 inp
+  print ("day22, part1", check 27492 $ res)
 
-part1 :: Setup -> Int
+  res <- part2 samCube sam
+  print ("day22, part2 (sam)", check 5031 $ pw res)
+
+  res <- part2 inpCube inp
+  print ("day22, part2", check 78291 $ pw res)
+
+
+part1 :: Setup -> IO Int
 part1 q = do
   let Setup {tiles,path} = q
-  let w = initWorld tiles
+  w <- initWorld mkEdgeMap1 tiles
   let pos0 = findInitPos w
   let s0 = (pos0,R)
   let s = walkPath w s0 path
-  pw s
+  pure $ pw s
+
+mkEdgeMap1 :: Set Pos -> IO (Map (Dir,Pos) (Dir,Pos))
+mkEdgeMap1 valid = do
+  let
+    edge :: Dir -> [Pos]
+    edge d =
+      [ p
+      | p <- Set.toList valid
+      , let p' = stepDirect p d
+      , not (p' `Set.member` valid)
+      ]
+  let u = zip (repeat U) $ sortBy (comparing fst) (edge U)
+  let d = zip (repeat D) $ sortBy (comparing fst) (edge D)
+  let l = zip (repeat L) $ sortBy (comparing snd) (edge L)
+  let r = zip (repeat R) $ sortBy (comparing snd) (edge R)
+  pure $ Map.fromList (zip u d ++ zip d u ++ zip l r ++ zip r l)
+
+part2 :: CubeSpec -> Setup -> IO (Pos,Dir)
+part2 cubeSpec q = do
+  let Setup {tiles,path} = q
+  w <- initWorld (mkEdgeMap2 cubeSpec) tiles
+  let pos0 = findInitPos w
+  let s0 = (pos0,R)
+  let s = walkPath w s0 path
+  pure s
+
+data Face = F1 | F2 | F3 | F4 | F5 | F6
+
+data CubeSpec = CubeSpec
+  { faceLocations :: Face -> (Int,Int)
+  , cutEdges :: [((Face,Dir),(Face,Dir))]
+  }
+
+{-
+sample:
+    ..1.
+    234.
+    ..56
+-}
+samCube :: CubeSpec
+samCube = CubeSpec
+  {
+    faceLocations = \case
+      F1 -> (2,0)
+      F2 -> (0,1)
+      F3 -> (1,1)
+      F4 -> (2,1)
+      F5 -> (2,2)
+      F6 -> (3,2)
+  ,
+    cutEdges =
+      [ ((F1,L),(F3,U))
+      , ((F1,U),(F2,U))
+      , ((F1,R),(F6,R))
+      , ((F4,R),(F6,U))
+      , ((F5,L),(F3,D))
+      , ((F2,D),(F5,D))
+      , ((F2,L),(F6,D))
+      ]
+  }
+
+{-
+  real:
+    .12
+    .3.
+    45.
+    6..
+-}
+inpCube :: CubeSpec
+inpCube = CubeSpec
+  {
+    faceLocations = \case
+      F1 -> (1,0)
+      F2 -> (2,0)
+      F3 -> (1,1)
+      F4 -> (0,2)
+      F5 -> (1,2)
+      F6 -> (0,3)
+  ,
+    cutEdges =
+      [ ((F1,U), (F6,L))
+      , ((F1,L), (F4,L))
+      , ((F3,L), (F4,U))
+      , ((F2,R), (F5,R))
+      , ((F2,D), (F3,R))
+      , ((F2,U), (F6,D))
+      , ((F6,R), (F5,D))
+      ]
+  }
+
+mkEdgeMap2 :: CubeSpec -> Set Pos -> IO (Map (Dir,Pos) (Dir,Pos))
+mkEdgeMap2 CubeSpec{faceLocations,cutEdges} valid = do
+  let mx = maximum [ x | (x,_) <- Set.toList valid ]
+  let my = maximum [ y | (_,y) <- Set.toList valid ]
+  --print (mx,my)
+  let size = max mx my `div` 4
+  --print size
+  let
+    clock :: Int -> Dir -> Pos
+    clock i = \case
+      U -> (i,1)
+      L -> (1,1+size-i)
+      D -> (1+size-i,size)
+      R -> (size,i)
+  let
+    anti :: Int -> Dir -> Pos
+    anti i = \case
+      U -> (1+size-i,1)
+      R -> (size,1+size-i)
+      D -> (i,size)
+      L -> (1,i)
+  let
+    expand :: (Int -> Dir -> Pos) -> (Face,Dir) -> [(Dir,Pos)]
+    expand spin (f,d) = do
+      let (x0,y0) = faceLocations f
+      [ (d,(size*x0+x,size*y0+y))
+        | i <- [1..size]
+        , let (x,y) = spin i d
+        ]
+  let
+    bridge :: ((Face,Dir),(Face,Dir)) -> [((Dir,Pos),(Dir,Pos))]
+    bridge (x,y) = do
+      let xx = expand clock x
+      let yy = expand anti y
+      zip xx yy ++ zip yy xx
+
+  let ps = cutEdges >>= bridge
+  --mapM_ print ps
+  pure (Map.fromList ps)
 
 type State = (Pos,Dir)
 
@@ -48,7 +186,8 @@ walkT t (p,d) = case t of
 step :: World -> (Pos,Dir) -> (Pos,Dir)
 step w s = do
   let s'@(pos',_) = stepUnchecked s
-  if walled w pos' then s else s'
+  if invalid w pos' then error (show ("invalid",s,"->",s')) else
+    if walled w pos' then s else s'
   where
     stepUnchecked :: (Pos,Dir) -> (Pos,Dir)
     stepUnchecked s@(p,d) =
@@ -72,26 +211,15 @@ turnR = \case U -> R; L -> U; D -> L; R -> D
 data World = World
   { wall :: Set Pos
   , valid :: Set Pos
-  , edgeMap :: Map (Dir,Pos) (Dir,Pos)
+  , edgeMap :: EM
   } deriving Show
 
-initWorld :: [[Tile]] -> World
-initWorld tss = do
-  let
-    edge :: Dir -> [Pos]
-    edge d =
-      [ p
-      | p <- Set.toList valid
-      , let p' = stepDirect p d
-      , not (p' `Set.member` valid)
-      ]
-  let u = zip (repeat U) $ sortBy (comparing fst) (edge U)
-  let d = zip (repeat D) $ sortBy (comparing fst) (edge D)
-  let l = zip (repeat L) $ sortBy (comparing snd) (edge L)
-  let r = zip (repeat R) $ sortBy (comparing snd) (edge R)
-  let edgeMap =
-        Map.fromList (zip u d ++ zip d u ++ zip l r ++ zip r l)
-  World { wall, valid, edgeMap }
+type EM = Map (Dir,Pos) (Dir,Pos)
+
+initWorld :: (Set Pos -> IO EM) -> [[Tile]] -> IO World
+initWorld mkEdgeMap tss = do
+  edgeMap <- mkEdgeMap valid
+  pure World { wall, valid, edgeMap }
   where
     valid = open `Set.union` wall
     wall = seek Wall
@@ -115,10 +243,15 @@ stepAcrossEdge :: World -> (Pos,Dir) -> Maybe (Pos,Dir)
 stepAcrossEdge World{edgeMap} (p,d) =
   case Map.lookup (d,p) edgeMap of
     Nothing -> Nothing
-    Just (_,p') -> Just (p',d)
+    Just (d',p') -> Just (p',opposite d')
+      where
+        opposite = turnL . turnL
 
 walled :: World -> Pos -> Bool
 walled World {wall} pos = pos `Set.member` wall
+
+invalid :: World -> Pos -> Bool
+invalid World {valid} pos = not (pos `Set.member` valid)
 
 type Pos = (Int,Int)
 data Dir = U | D | L | R deriving (Eq,Ord,Show)
