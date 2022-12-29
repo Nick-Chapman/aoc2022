@@ -13,28 +13,20 @@ main :: IO ()
 main = do
   sam <- parse gram <$> readFile "input/day22.sam"
   inp <- parse gram <$> readFile "input/day22.input"
-  res <- part1 sam
-  print ("day22, part1 (sam)", check 6032 $ res)
-  res <- part1 inp
-  print ("day22, part1", check 27492 $ res)
+  print ("day22, part1 (sam)", check 6032 $ part1 sam)
+  print ("day22, part1", check 27492 $ part1 inp)
+  print ("day22, part2 (sam)", check 5031 $ part2 samCube sam)
+  print ("day22, part2", check 78291 $ part2 inpCube inp)
 
-  res <- part2 samCube sam
-  print ("day22, part2 (sam)", check 5031 $ pw res)
-
-  res <- part2 inpCube inp
-  print ("day22, part2", check 78291 $ pw res)
-
-
-part1 :: Setup -> IO Int
+part1 :: Setup -> Int
 part1 q = do
   let Setup {tiles,path} = q
-  w <- initWorld mkEdgeMap1 tiles
+  let w = initWorld mkEdgeMap1 tiles
   let pos0 = findInitPos w
   let s0 = (pos0,R)
-  let s = walkPath w s0 path
-  pure $ pw s
+  computePW (walkPath w s0 path)
 
-mkEdgeMap1 :: Set Pos -> IO (Map (Dir,Pos) (Dir,Pos))
+mkEdgeMap1 :: Set Pos -> Map (Dir,Pos) (Dir,Pos)
 mkEdgeMap1 valid = do
   let
     edge :: Dir -> [Pos]
@@ -48,16 +40,15 @@ mkEdgeMap1 valid = do
   let d = zip (repeat D) $ sortBy (comparing fst) (edge D)
   let l = zip (repeat L) $ sortBy (comparing snd) (edge L)
   let r = zip (repeat R) $ sortBy (comparing snd) (edge R)
-  pure $ Map.fromList (zip u d ++ zip d u ++ zip l r ++ zip r l)
+  Map.fromList (zip u d ++ zip d u ++ zip l r ++ zip r l)
 
-part2 :: CubeSpec -> Setup -> IO (Pos,Dir)
+part2 :: CubeSpec -> Setup -> Int
 part2 cubeSpec q = do
   let Setup {tiles,path} = q
-  w <- initWorld (mkEdgeMap2 cubeSpec) tiles
+  let w = initWorld (mkEdgeMap2 cubeSpec) tiles
   let pos0 = findInitPos w
   let s0 = (pos0,R)
-  let s = walkPath w s0 path
-  pure s
+  computePW (walkPath w s0 path)
 
 data Face = F1 | F2 | F3 | F4 | F5 | F6
 
@@ -123,13 +114,11 @@ inpCube = CubeSpec
       ]
   }
 
-mkEdgeMap2 :: CubeSpec -> Set Pos -> IO (Map (Dir,Pos) (Dir,Pos))
+mkEdgeMap2 :: CubeSpec -> Set Pos -> Map (Dir,Pos) (Dir,Pos)
 mkEdgeMap2 CubeSpec{faceLocations,cutEdges} valid = do
   let mx = maximum [ x | (x,_) <- Set.toList valid ]
   let my = maximum [ y | (_,y) <- Set.toList valid ]
-  --print (mx,my)
   let size = max mx my `div` 4
-  --print size
   let
     clock :: Int -> Dir -> Pos
     clock i = \case
@@ -159,14 +148,12 @@ mkEdgeMap2 CubeSpec{faceLocations,cutEdges} valid = do
       let yy = expand anti y
       zip xx yy ++ zip yy xx
 
-  let ps = cutEdges >>= bridge
-  --mapM_ print ps
-  pure (Map.fromList ps)
+  Map.fromList (cutEdges >>= bridge)
 
 type State = (Pos,Dir)
 
-pw :: (Pos,Dir) -> Int
-pw ((x,y),d) = 1000 * y + 4 * x +
+computePW :: (Pos,Dir) -> Int
+computePW ((x,y),d) = 1000 * y + 4 * x +
   case d of R -> 0; D -> 1; L -> 2; U -> 3
 
 walkPath :: World -> State -> Path -> State
@@ -216,15 +203,14 @@ data World = World
 
 type EM = Map (Dir,Pos) (Dir,Pos)
 
-initWorld :: (Set Pos -> IO EM) -> [[Tile]] -> IO World
+initWorld :: (Set Pos -> EM) -> [[Tile]] -> World
 initWorld mkEdgeMap tss = do
-  edgeMap <- mkEdgeMap valid
-  pure World { wall, valid, edgeMap }
+  let edgeMap = mkEdgeMap valid
+  World { wall, valid, edgeMap }
   where
     valid = open `Set.union` wall
     wall = seek Wall
     open = seek Open
-
     seek :: Tile -> Set Pos
     seek sought = do
       Set.fromList
