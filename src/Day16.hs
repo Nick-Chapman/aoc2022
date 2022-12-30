@@ -13,15 +13,13 @@ main :: IO ()
 main = do
   sam <- parse gram <$> readFile "input/day16.sam"
   inp <- parse gram <$> readFile "input/day16.input"
-  res <- part1 sam
-  print ("day16, part1 (sam)", check 1651 $ res)
-  res <- part1 inp
-  print ("day16, part1", check 1741 $ res)
-
-  --res <- _part2 sam
-  --print ("day16, part2 (sam)", check 1707 $ res)
-
-  pure ()
+  print ("day16, part1 (sam)", check 1651 $ part1 sam)
+  print ("day16, part1", check 1741 $ part1 inp)
+  print ("day16, part2 (sam)", check 1707 $ part2 sam)
+  print ("day16, part2", check 2316 $ part2 inp) -- quite slow: 105sec
+  where
+    part1 = partX (step1,init1)
+    part2 = partX (step2,init2)
 
 type Setup = [Line]
 data Line = Line Vid Int [Vid] deriving Show
@@ -41,21 +39,60 @@ gram = terminated nl line
       pure $ Line x i xs
     vid = many (sat Char.isAlpha)
 
-part1 :: Setup -> IO Int
-part1 lines = do
-  --mapM_ print lines
+
+type Node1 = (Vid,Int,Set Vid)
+
+init1 :: Set Vid -> Node1
+init1 nz = ("AA",30,nz)
+
+step1 :: World -> Node1 -> [(Int,Node1)]
+step1 World{flow,distance} (v1,n1,op1) =
+  [ (value, (v2,n2,op2))
+  | v2 <- Set.toList op1
+  , let d = distance (v1,v2) + 1
+  , let n2 = n1 - d
+  , n2 > 0
+  , let value = n2 * flow v2
+  , let op2 = Set.delete v2 op1
+  ]
+
+
+type Node2 = (Vid,(Int,Vid),Int,Set Vid)
+
+init2 :: Set Vid -> Node2
+init2 nz = ("AA",(0,"AA"),26,nz)
+
+step2 :: World -> Node2 -> [(Int,Node2)]
+step2 World{flow,distance} (a,(q,b),n1,op1) =
+  [ (value
+    , case flip of
+        False -> (v,(q-d,b),n1-d,op2)
+        True ->  (b,(d-q,v),n1-q,op2)
+    )
+  | v <- Set.toList op1
+  , let d = distance (a,v) + 1
+  , let flip = d >= q
+  , let n2 = n1 - d
+  , (n2 > 0) -- || flip
+  , let value = n2 * flow v
+  , let op2 = Set.delete v op1
+  ]
+
+
+type Graph n = (World -> n -> [(Int,n)] , Set Vid -> n)
+
+partX :: Ord n => Graph n -> Setup -> Int
+partX (step,init) lines = do
   let nz = Set.fromList [ v | Line v flow _ <- lines, flow /= 0 ]
   let important = Set.fromList ["AA"] `Set.union` nz
-  --print important
   let a0 = Access $ Map.fromList [ ((v1,v2),1) | Line v1 _ vs <- lines, v2 <- vs ]
   let
-    loop :: Int -> Access -> IO Access
+    loop :: Int -> Access -> Access
     loop i a = do
-      --print i
       let a' = composeA a a `unionA` a
-      if a' == a then pure a else loop (i+1) a'
+      if a' == a then a else loop (i+1) a'
 
-  a1 <- loop 0 a0
+  let a1 = loop 0 a0
   let a2 = Access $ Map.filterWithKey
         (\(s,d) _ ->
            s /= d &&
@@ -63,7 +100,8 @@ part1 lines = do
            (d `Set.member` important)
         ) (deAccess a1)
 
-  pure $ searchTop1 a2 lines nz
+  let w = initWorld a2 lines
+  explore (step w) (init nz)
 
 
 data Access = Access { deAccess :: Map (Vid,Vid) Int } deriving (Eq,Show)
@@ -94,27 +132,7 @@ initWorld (Access aMap) lines  = do
   World { flow, distance }
 
 
-type Node1 = (Vid,Int,Set Vid)
-
-searchTop1 :: Access -> [Line] -> Set Vid -> Int
-searchTop1 access lines nz = do
-  let w = initWorld access lines
-  explore (step1 w) ("AA",30,nz)
-
-step1 :: World -> Node1 -> [(Int,Node1)]
-step1 World{flow,distance} (v1,n1,op1) = if n1 < 2 then [] else
-  [ do
-      let n2 = n1 - distance (v1,v2) - 1
-      let value = n2 * flow v2
-      let op2 = Set.delete v2 op1
-      let node2 = (v2,n2,op2)
-      (value, node2)
-  | v2 <- Set.toList op1 , v1 /= v2
-  ]
-
-----------------------------------------------------------------------
 -- generic graph exploration, maximizing path-summed value
-
 explore :: forall n. Ord n => (n -> [(Int,n)]) -> n -> Int
 explore step init = evalState (search init) Map.empty
   where
