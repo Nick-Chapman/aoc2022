@@ -1,6 +1,6 @@
 module Day16 (main) where
 
-import Control.Monad (ap,liftM)
+import Control.Monad.State (State,evalState,get,modify)
 import Data.Map (Map)
 import Data.Set (Set)
 import Misc (check,look)
@@ -76,56 +76,57 @@ composeA (Access m1) (Access m2) = Access $ Map.fromList
 unionA :: Access -> Access -> Access
 unionA (Access m1) (Access m2) = Access $ Map.unionWith min m1 m2
 
-searchTop1 :: Access -> [Line] -> Set Vid -> Int
-searchTop1 (Access aMap) lines nz = run (search ("AA",30,nz))
-  where
+
+data World = World
+  { flow :: Vid -> Int
+  , distance :: (Vid,Vid) -> Int
+  }
+
+initWorld :: Access -> [Line] -> World
+initWorld (Access aMap) lines  = do
+  let
     flow :: Vid -> Int
     flow k = Misc.look k m
       where m = Map.fromList [ (v,flow) | Line v flow _ <- lines, flow /= 0 ]
-
+  let
     distance :: (Vid,Vid) -> Int
     distance p = Misc.look p aMap
+  World { flow, distance }
 
-    search :: Key -> Eff Int
-    search key@(v1,n,op) = do
-      if n < 2 || Set.null op then pure 0 else do
-        GetCache key >>= \case
-          Just res -> do
-            pure res
-          Nothing -> do
-            let as = [ (+ ((n-d-1) * flow v2)) <$> search (v2,n-d-1,Set.delete v2 op)
-                     | v2 <- Set.toList op, v1 /= v2
-                     , let d = distance (v1,v2)
-                     ]
-            xs <- sequence as
-            let res = maximum (0:xs)
-            SetCache key res
-            pure res
 
-data Eff x where -- search effect
-  Ret :: x -> Eff x
-  Bind :: Eff x -> (x -> Eff y) -> Eff y
-  SetCache :: Key -> Int -> Eff ()
-  GetCache :: Key -> Eff (Maybe Int)
+type Node1 = (Vid,Int,Set Vid)
 
-instance Functor Eff where fmap = liftM
-instance Applicative Eff where pure = return; (<*>) = ap
-instance Monad Eff where return = Ret; (>>=) = Bind
+searchTop1 :: Access -> [Line] -> Set Vid -> Int
+searchTop1 access lines nz = do
+  let w = initWorld access lines
+  explore (step1 w) ("AA",30,nz)
 
-run :: Eff x -> x
-run e = loop cache0 e $ \_cache a -> a
+step1 :: World -> Node1 -> [(Int,Node1)]
+step1 World{flow,distance} (v1,n1,op1) = if n1 < 2 then [] else
+  [ do
+      let n2 = n1 - distance (v1,v2) - 1
+      let value = n2 * flow v2
+      let op2 = Set.delete v2 op1
+      let node2 = (v2,n2,op2)
+      (value, node2)
+  | v2 <- Set.toList op1 , v1 /= v2
+  ]
+
+----------------------------------------------------------------------
+-- generic graph exploration, maximizing path-summed value
+
+explore :: forall n. Ord n => (n -> [(Int,n)]) -> n -> Int
+explore step init = evalState (search init) Map.empty
   where
-    loop :: Cache -> Eff a -> (Cache -> a -> b) -> b
-    loop cache e k = do
-     case e of
-      Ret x -> k cache x
-      Bind e f -> loop cache e $ \cache a -> loop cache (f a) k
-      SetCache key res -> k (Map.insert key res cache) ()
-      GetCache key -> k cache (Map.lookup key cache)
+    search :: n -> State (Map n Int) Int
+    search n1 = do
+      getCache n1 >>= \case
+        Just res -> do pure res
+        Nothing -> do
+          xs <- sequence [ (+value) <$> search n2 | (value,n2) <- step n1 ]
+          let res = maximum (0:xs)
+          setCache n1 res
+          pure res
 
-type Key = (Vid,Int,Set Vid)
-
-type Cache = Map Key Int
-
-cache0 :: Cache
-cache0 = Map.empty
+    getCache n = Map.lookup n <$> get
+    setCache n res = modify (Map.insert n res)
