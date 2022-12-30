@@ -97,11 +97,7 @@ searchTop1 (Access aMap) lines nz = run (search ("AA",30,nz))
                      | v2 <- Set.toList op, v1 /= v2
                      , let d = distance (v1,v2)
                      ]
-            let bs = [ search (v2,n-d,op)
-                     | v2 <- Set.toList op, v1 /= v2
-                     , let d = distance (v1,v2)
-                     ]
-            xs <- sequence (as++bs)
+            xs <- sequence as
             let res = maximum (0:xs)
             SetCache key res
             pure res
