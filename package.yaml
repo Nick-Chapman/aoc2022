@@ -4,7 +4,7 @@ description:         My solutions for Advent of Code 2022
 license:             BSD3
 author:              Nick Chapman
 maintainer:          nic@amadido.co.uk
-github:              https://github.com/Nick-Chapman/aoc2022.git
+github:              Nick-Chapman/aoc2022.git
 
 dependencies:
 - ansi-terminal
