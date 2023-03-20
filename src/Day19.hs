@@ -43,7 +43,7 @@ explore maxN (blue@Blue{index=_index},expected) = do
     see gMax n = \case
       [] -> pure (check gMax expected)
       State{g}:more -> do
-        let! _ = if g > gMax then print (g,n) else pure ()
+        let !_x = if g > gMax then print (g,n) else pure ()
         see (max g gMax) (n+1) more
 
   see 0 1 ss

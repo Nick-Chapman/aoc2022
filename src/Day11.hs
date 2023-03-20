@@ -1,3 +1,4 @@
+{-# OPTIONS -Wno-incomplete-uni-patterns #-}
 module Day11 (main) where
 
 import Misc (check,look)

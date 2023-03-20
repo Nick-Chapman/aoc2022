@@ -1,4 +1,4 @@
-
+{-# OPTIONS -Wno-incomplete-uni-patterns #-}
 module Day15 (main) where
 
 import Misc (check,the)
