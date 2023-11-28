@@ -1,11 +1,11 @@
 module Day12 (main) where
 
 import Data.Map (Map)
-import Data.Set (Set)
+import Set (Set)
 import Misc (check,look,the)
 import qualified Data.Char as Char
 import qualified Data.Map as Map
-import qualified Data.Set as Set
+import qualified Set as Set
 
 main :: IO ()
 main = do

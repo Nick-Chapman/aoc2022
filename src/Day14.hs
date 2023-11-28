@@ -1,10 +1,10 @@
 
 module Day14 (main) where
 
-import Data.Set (Set,member,insert)
+import Set (Set,member,insert)
 import Misc (check)
 import Par4 (Par,parse,separated,terminated,nl,key,int,lit)
-import qualified Data.Set as Set (fromList)
+import qualified Set (fromList)
 
 main :: IO ()
 main = do

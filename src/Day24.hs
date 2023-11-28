@@ -2,10 +2,10 @@ module Day24 (main) where
 
 import Misc (check,the)
 import Par4 (Par,parse,many,terminated,sat,nl)
-import Data.Set (Set)
+import Set (Set)
 import Data.Map (Map)
 --import Data.Maybe (listToMaybe)
-import qualified Data.Set as Set
+import qualified Set as Set
 import qualified Data.Map.Strict as Map
 
 import Data.Array (Array,(!),listArray)

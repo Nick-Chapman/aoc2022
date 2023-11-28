@@ -2,8 +2,8 @@ module Day18(main) where
 
 import Misc (check)
 import Par4 (Par,parse,terminated,nl,int,lit)
-import qualified Data.Set as Set
-import Data.Set (Set,difference,union,notMember)
+import qualified Set as Set
+import Set (Set,difference,union,notMember)
 
 main :: IO ()
 main = do

@@ -1,10 +1,10 @@
 module Day17 (main) where
 
-import Data.Set (Set)
+import Set (Set)
 import Data.Map (Map)
 import Misc (check)
 import Par4 (Par,parse,many,nl,alts,lit)
-import qualified Data.Set as Set
+import qualified Set as Set
 import qualified Data.Map.Strict  as Map
 
 main :: IO ()

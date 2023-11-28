@@ -2,9 +2,9 @@ module Day22 (main) where
 
 import Misc (check)
 import Par4 (Par,parse,many,terminated,nl,alts,lit,int)
-import qualified Data.Set as Set
+import qualified Set as Set
 import qualified Data.Map as Map
-import Data.Set (Set)
+import Set (Set)
 import Data.Map (Map)
 import Data.List (sortBy)
 import Data.Ord (comparing)

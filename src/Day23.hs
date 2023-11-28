@@ -1,11 +1,11 @@
 module Day23 (main) where
 
 import Data.Maybe (maybeToList)
-import Data.Set (Set)
+import Set (Set)
 import Misc (collate,check)
 import Par4 (Par,parse,many,terminated,sat,nl)
 import Prelude hiding (round,init)
-import qualified Data.Set as Set
+import qualified Set as Set
 
 main :: IO ()
 main = do

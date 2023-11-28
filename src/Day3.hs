@@ -4,8 +4,8 @@ module Day3 (main) where
 import Misc (check,the)
 import Data.Char as Char (ord)
 import Data.List.Split (chunksOf)
-import qualified Data.Set as Set
-import Data.Set (intersection)
+import qualified Set as Set
+import Set (intersection)
 
 main :: IO ()
 main = do
